@@ -1,92 +1,95 @@
 ---
 active: true
 iteration: 1
-max_iterations: 30
-completion_promise: "PRD121_COMPLETE"
-started_at: "2026-01-31T01:06:32Z"
+max_iterations: 40
+completion_promise: "PRD130_COMPLETE"
+started_at: "2026-01-31T01:26:06Z"
 ---
 
                                                                                              
-  ## Task: Execute PRD-121 - Migrate tooladapter to toolfoundation/adapter                                  
+  ## PRD-130: Migrate toolindex to tooldiscovery/index                                                      
                                                                                                             
-  ### Description                                                                                          
-  Migrate the tooladapter package from standalone repo (jonwraymond/tooladapter) to consolidated repo       
-  (jonwraymond/toolfoundation/adapter).         )                                                           
+  ### Context                                                                                               
+  - Source: /Users/jraymond/Documents/Projects/ApertureStack/toolindex/                                     
+  - Target: /Users/jraymond/Documents/Projects/ApertureStack/tooldiscovery/index/                           
+  - Working directory: /Users/jraymond/Documents/Projects/ApertureStack/tooldiscovery                       
                                                                                                             
-  ### Source & Target                                                                                       
-  - Source: /Users/jraymond/Documents/Projects/ApertureStack/tooladapter/                                   
-  - Target: /Users/jraymond/Documents/Projects/ApertureStack/toolfoundation/adapter/                        
+  ### Source Files to Migrate                                                                               
+  - index.go (~31KB)                                                                                        
+  - index_test.go (~51KB)                                                                                   
+  - pagination.go (~1.5KB)                                                                                  
+  - contract_test.go (~2KB)                                                                                 
                                                                                                             
   ### Requirements                                                                                          
-  - [ ] Copy all .go files from tooladapter to toolfoundation/adapter/                                      
-  - [ ] Update package declaration from 'package tooladapter' to 'package adapter'                          
-  - [ ] Update go.mod to include any new dependencies from tooladapter                                      
-  - [ ] Update internal import paths to github.com/jonwraymond/toolfoundation/adapter                       
-  - [ ] If adapter imports toolmodel, update to github.com/jonwraymond/toolfoundation/model                 
-  - [ ] Ensure all tests pass with 'go test ./adapter/...'                                                  
-  - [ ] Ensure 'go build ./...' succeeds                                                                    
-  - [ ] Commit changes with proper message                                                                  
+  1. Copy all .go files from toolindex/ to tooldiscovery/index/                                             
+  2. Rename package from 'toolindex' to 'index'                                                             
+  3. Update import paths:                                                                                   
+     - github.com/jonwraymond/toolindex → github.com/jonwraymond/tooldiscovery/index                        
+     - github.com/jonwraymond/toolmodel → github.com/jonwraymond/toolfoundation/model                       
+  4. Update go.mod to add toolfoundation dependency                                                         
+  5. Create doc.go with package documentation                                                               
+  6. All tests must pass with GOWORK=off                                                                    
                                                                                                             
-  ### Execution Steps                                                                                       
-  1. Create adapter/ directory in toolfoundation                                                            
-  2. Copy all *.go files from tooladapter to toolfoundation/adapter/                                        
-  3. Update package declarations (tooladapter -> adapter)                                                   
-  4. Update any internal imports (tooladapter -> adapter, toolmodel -> model)                               
-  5. Merge any new dependencies into toolfoundation/go.mod                                                  
-  6. Run go mod tidy                                                                                        
-  7. Run go build ./...                                                                                     
-  8. Run go test ./adapter/...                                                                              
-  9. Commit and push                                                                                        
+  ### Critical Rules                                                                                        
+  - Use GOWORK=off for all go commands                                                                      
+  - Package name must be 'index' (not 'toolindex')                                                          
+  - Preserve all existing functionality                                                                     
+  - Update internal references (e.g., toolindex.X → index.X in test files)                                  
                                                                                                             
   ### Self-Correction                                                                                       
-  If go build fails:                                                                                        
-  1. Read the error message                                                                                 
-  2. Check for missing imports or wrong package names                                                       
-  3. If toolmodel import fails, ensure it points to toolfoundation/model                                    
-  4. Fix and retry                                                                                          
+  If tests fail:                                                                                            
+  1. Read the error message carefully                                                                       
+  2. Check for missed import path updates                                                                   
+  3. Check for missed package name references                                                               
+  4. Fix and re-run tests                                                                                   
                                                                                                             
-  If go test fails:                                                                                         
-  1. Read test output carefully                                                                             
-  2. Check if test imports need updating                                                                    
-  3. Fix failing tests                                                                                      
-                                                                                                            
-  If import cycle detected:                                                                                 
-  1. Check for circular dependencies between model and adapter                                              
-  2. May need to reorganize code                                                                            
-                                                                                                            
-  If stuck for 5+ iterations on same issue:                                                                 
-  1. Document the blocker                                                                                   
-  2. List what was attempted                                                                                
-  3. Output: <promise>NEEDS_HELP</promise>                                                                  
+  If build fails:                                                                                           
+  1. Check go.mod has correct dependencies                                                                  
+  2. Run 'GOWORK=off go mod tidy'                                                                           
+  3. Verify toolfoundation/model exports required types                                                     
                                                                                                             
   ### Verification Commands                                                                                 
   ```bash                                                                                                
-  # Verify package exists                                                                                   
-  ls toolfoundation/adapter/*.go                                                                            
-                                                                                                            
-  # Verify build                                                                                            
-  cd toolfoundation && GOWORK=off go build ./...                                                            
-                                                                                                            
-  # Verify tests                                                                                            
-  cd toolfoundation && GOWORK=off go test ./adapter/... -v                                                  
-                                                                                                            
-  # Verify package name                                                                                     
-  grep '^package adapter' toolfoundation/adapter/*.go | head -3                                             
-                                                                                                            
-  # Verify no old imports                                                                                   
-  grep -r 'tooladapter' toolfoundation/adapter/ || echo 'No old imports found'                              
-  grep -r 'toolmodel' toolfoundation/adapter/ || echo 'No toolmodel imports found'                          
+  cd /Users/jraymond/Documents/Projects/ApertureStack/tooldiscovery                                         
+  GOWORK=off go build ./index/...                                                                           
+  GOWORK=off go test ./index/... -v                                                                         
+  GOWORK=off go test ./index/... -cover                                                                     
   ```                                                                                                    
                                                                                                             
   ### Completion Criteria                                                                                   
-  ALL of the following must be true:                                                                        
-  1. toolfoundation/adapter/ directory exists with .go files                                                
-  2. All files have 'package adapter' declaration                                                           
-  3. No references to old import paths (tooladapter, toolmodel)                                             
-  4. `go build ./...` succeeds in toolfoundation                                                          
-  5. `go test ./adapter/...` passes                                                                       
-  6. Changes committed and pushed                                                                           
+  ALL of these must be true:                                                                                
+  - [ ] index/ directory exists with migrated files                                                         
+  - [ ] Package declaration is 'package index'                                                              
+  - [ ] All imports use jonwraymond/tooldiscovery/index                                                     
+  - [ ] All imports use jonwraymond/toolfoundation/model                                                    
+  - [ ] GOWORK=off go build ./index/... succeeds                                                            
+  - [ ] GOWORK=off go test ./index/... passes                                                               
+  - [ ] Coverage >70%                                                                                       
+  - [ ] doc.go exists with package documentation                                                            
+  - [ ] Committed with message: feat(index): migrate toolindex package                                      
+  - [ ] Pushed to origin/main                                                                               
                                                                                                             
-  When ALL criteria verified:                                                                               
-  Output: <promise>PRD121_COMPLETE</promise>                                                                
+  ### Commit Message Template                                                                               
+  feat(index): migrate toolindex package                                                                    
+                                                                                                            
+  Migrate the tool registry from standalone toolindex repository.                                           
+                                                                                                            
+  Package contents:                                                                                         
+  - Index interface with CRUD operations                                                                    
+  - InMemoryIndex for ephemeral storage                                                                     
+  - FileIndex for persistent storage                                                                        
+  - Searcher interface for pluggable search                                                                 
+  - Progressive disclosure support                                                                          
+  - Pagination support                                                                                      
+                                                                                                            
+  Dependencies:                                                                                             
+  - github.com/jonwraymond/toolfoundation/model                                                             
+                                                                                                            
+  Migration: github.com/jonwraymond/toolindex → tooldiscovery/index                                         
+                                                                                                            
+  Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>                                                   
+                                                                                                            
+  ### Completion Signal                                                                                     
+  When ALL criteria verified, output:                                                                       
+  <promise>PRD130_COMPLETE</promise>                                                                        
   

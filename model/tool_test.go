@@ -349,7 +349,10 @@ func TestToolIcon_Alias(t *testing.T) {
 	}
 
 	// ToolIcon should be usable as mcp.Icon
-	var mcpIcon mcp.Icon = icon
+	acceptsIcon := func(_ mcp.Icon) {}
+	acceptsIcon(icon)
+
+	mcpIcon := icon
 	if mcpIcon.Source != "https://example.com/icon.png" {
 		t.Errorf("Icon Source = %q, want %q", mcpIcon.Source, "https://example.com/icon.png")
 	}
@@ -655,8 +658,8 @@ func TestMCPJSON_RoundTrip_AllMCPFields(t *testing.T) {
 	if restored.Annotations == nil || restored.Annotations.Title != original.Annotations.Title {
 		t.Errorf("annotations title = %#v, want %#v", restored.Annotations, original.Annotations)
 	}
-	if restored.Meta.GetMeta()["traceId"] != "abc123" {
-		t.Errorf("meta traceId = %v, want %q", restored.Meta.GetMeta()["traceId"], "abc123")
+	if restored.GetMeta()["traceId"] != "abc123" {
+		t.Errorf("meta traceId = %v, want %q", restored.GetMeta()["traceId"], "abc123")
 	}
 	if len(restored.Icons) != 1 || restored.Icons[0].Source != original.Icons[0].Source {
 		t.Errorf("icons = %#v, want %#v", restored.Icons, original.Icons)

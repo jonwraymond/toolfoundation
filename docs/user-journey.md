@@ -1,13 +1,142 @@
-# User Journey
+# toolfoundation User Journey
 
-## Installation
+## Overview
 
-TBD
+This guide walks through the typical usage patterns for toolfoundation,
+from defining your first tool to converting between LLM provider formats.
 
-## Basic Usage
+## 1. Installation
 
-TBD
+```bash
+go get github.com/jonwraymond/toolfoundation@latest
+```
 
-## Advanced Usage
+## 2. Define Your First Tool
 
-TBD
+```go
+import (
+  "github.com/jonwraymond/toolfoundation/model"
+  "github.com/modelcontextprotocol/go-sdk/mcp"
+)
+
+// Create a tool definition
+tool := model.Tool{
+  Namespace: "calculator",
+  Tool: mcp.Tool{
+    Name:        "add",
+    Description: "Add two numbers together",
+    InputSchema: map[string]any{
+      "type": "object",
+      "properties": map[string]any{
+        "a": map[string]any{"type": "number"},
+        "b": map[string]any{"type": "number"},
+      },
+      "required": []string{"a", "b"},
+    },
+  },
+  Tags: model.NormalizeTags([]string{"math", "arithmetic"}),
+}
+
+// Validate the tool
+if err := tool.Validate(); err != nil {
+  log.Fatalf("Invalid tool: %v", err)
+}
+
+// Get the canonical ID
+fmt.Println(tool.ToolID()) // "calculator:add"
+```
+
+## 3. Assign a Backend
+
+```go
+// Local handler backend
+tool.Backend = model.ToolBackend{
+  Kind: model.BackendKindLocal,
+  Name: "add_handler",
+}
+
+// Or MCP server backend
+tool.Backend = model.ToolBackend{
+  Kind:       model.BackendKindMCP,
+  ServerName: "math-server",
+}
+```
+
+## 4. Convert to OpenAI Format
+
+```go
+import (
+  "github.com/jonwraymond/toolfoundation/adapter"
+  "github.com/jonwraymond/toolfoundation/adapter/adapters"
+)
+
+// Set up the adapter registry
+registry := adapter.NewRegistry()
+registry.Register(adapters.NewMCPAdapter())
+registry.Register(adapters.NewOpenAIAdapter())
+registry.Register(adapters.NewAnthropicAdapter())
+
+// Convert MCP tool to OpenAI format
+result, err := registry.Convert(tool.Tool, "mcp", "openai")
+if err != nil {
+  log.Fatalf("Conversion failed: %v", err)
+}
+
+// Check for feature loss
+for _, warning := range result.Warnings {
+  log.Printf("Warning: %s", warning)
+}
+
+openaiTool := result.Tool.(adapters.OpenAIFunction)
+fmt.Printf("OpenAI function: %s\n", openaiTool.Name)
+```
+
+## 5. Round-Trip Conversion
+
+```go
+// Convert OpenAI → MCP
+result2, err := registry.Convert(openaiTool, "openai", "mcp")
+if err != nil {
+  log.Fatal(err)
+}
+
+mcpTool := result2.Tool.(mcp.Tool)
+```
+
+## Common Patterns
+
+### Batch Tool Registration
+
+```go
+tools := []model.Tool{
+  {Namespace: "math", Tool: mcp.Tool{Name: "add", ...}},
+  {Namespace: "math", Tool: mcp.Tool{Name: "subtract", ...}},
+  {Namespace: "math", Tool: mcp.Tool{Name: "multiply", ...}},
+}
+
+for _, t := range tools {
+  if err := t.Validate(); err != nil {
+    log.Printf("Skipping invalid tool %s: %v", t.ToolID(), err)
+    continue
+  }
+  // Register with index...
+}
+```
+
+### Schema Validation
+
+```go
+validator := model.NewSchemaValidator()
+
+// Validate input against tool schema
+input := map[string]any{"a": 5, "b": 10}
+if err := validator.ValidateInput(tool.InputSchema, input); err != nil {
+  log.Fatalf("Invalid input: %v", err)
+}
+```
+
+## Next Steps
+
+- Register tools with [tooldiscovery/index](https://github.com/jonwraymond/tooldiscovery)
+- Execute tools with [toolexec/run](https://github.com/jonwraymond/toolexec)
+- Expose via MCP with [metatools-mcp](https://github.com/jonwraymond/metatools-mcp)

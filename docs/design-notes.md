@@ -1,9 +1,77 @@
-# Design Notes
+# toolfoundation Design Notes
 
-## Architecture Decisions
+## Overview
 
-TBD
+toolfoundation provides the canonical data types that all other ApertureStack
+components depend on. It contains two packages: `model` for tool definitions
+and `adapter` for format conversion.
 
-## Trade-offs
+## model Package
 
-TBD
+### Design Decisions
+
+1. **MCP SDK Embedding**: The `Tool` type embeds `mcp.Tool` from the official
+   MCP Go SDK rather than reimplementing the fields. This ensures 1:1 spec
+   compatibility while allowing extension.
+
+2. **Namespace + Name = ID**: Tool IDs are `namespace:name` format, providing
+   stable identifiers across registry operations.
+
+3. **Backend Abstraction**: `ToolBackend` supports three kinds:
+   - `local`: In-process handler function
+   - `provider`: External tool provider
+   - `mcp`: Remote MCP server
+
+4. **Tag Normalization**: Tags are normalized (lowercase, trimmed, deduped)
+   to ensure consistent search behavior.
+
+### Error Handling
+
+- `Validate()` returns descriptive errors for invalid tools
+- Schema validation uses JSON Schema draft 2020-12
+- Empty names, invalid characters, and missing schemas are rejected
+
+## adapter Package
+
+### Design Decisions
+
+1. **Canonical Intermediate**: All conversions go through `CanonicalTool`,
+   a protocol-agnostic intermediate representation.
+
+2. **Pure Transforms**: Conversions have no I/O or side effects. Same input
+   always produces same output.
+
+3. **Feature Loss Warnings**: When the target format doesn't support a feature
+   (e.g., `$ref` in OpenAI), warnings are returned instead of errors.
+
+4. **Minimal Dependencies**: The MCP adapter depends on the MCP SDK. OpenAI
+   and Anthropic adapters use self-contained types.
+
+### Supported Formats
+
+| Format | Adapter | Notes |
+|--------|---------|-------|
+| MCP | MCPAdapter | Full spec support |
+| OpenAI | OpenAIAdapter | Strict mode support |
+| Anthropic | AnthropicAdapter | Full spec support |
+
+### Feature Compatibility
+
+| Feature | MCP | OpenAI | Anthropic |
+|---------|:---:|:------:|:---------:|
+| `$ref/$defs` | Yes | No | No |
+| `anyOf/oneOf` | Yes | No | Yes |
+| `pattern` | Yes | Yes* | Yes |
+| `enum/const` | Yes | Yes | Yes |
+
+*OpenAI supports pattern only in strict mode.
+
+## Dependencies
+
+- `github.com/modelcontextprotocol/go-sdk/mcp` - MCP type definitions
+- `github.com/santhosh-tekuri/jsonschema` - Schema validation (optional)
+
+## Links
+
+- [index](index.md)
+- [user journey](user-journey.md)
