@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jonwraymond/toolfoundation/model"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/jonwraymond/toolfoundation/model"
 )
 
 // Example_createTool demonstrates creating a Tool with the toolmodel library.
