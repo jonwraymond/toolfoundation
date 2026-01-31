@@ -6,7 +6,7 @@ import (
 
 // Constraint represents a version constraint (e.g., ">=1.0.0", "^2.0.0").
 type Constraint struct {
-	Op      string  // "", "=", ">", ">=", "<", "<=", "^", "~"
+	Op      string // "", "=", ">", ">=", "<", "<=", "^", "~"
 	Version Version
 }
 

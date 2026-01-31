@@ -230,7 +230,7 @@ func TestMatrix_Check(t *testing.T) {
 	}
 
 	// Test version below minimum
-	ok, msg = m.Check("test", MustParse("0.5.0"))
+	ok, _ = m.Check("test", MustParse("0.5.0"))
 	if ok {
 		t.Error("Expected incompatible for version below minimum")
 	}

@@ -224,10 +224,10 @@ func TestAdapter_Interface(t *testing.T) {
 
 // mockAdapter is a test implementation of Adapter
 type mockAdapter struct {
-	name             string
-	toCanonicalFunc  func(any) (*CanonicalTool, error)
+	name              string
+	toCanonicalFunc   func(any) (*CanonicalTool, error)
 	fromCanonicalFunc func(*CanonicalTool) (any, error)
-	supportsFunc     func(SchemaFeature) bool
+	supportsFunc      func(SchemaFeature) bool
 }
 
 func (m *mockAdapter) Name() string {
