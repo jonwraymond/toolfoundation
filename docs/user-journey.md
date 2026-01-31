@@ -126,12 +126,36 @@ for _, t := range tools {
 ### Schema Validation
 
 ```go
-validator := model.NewSchemaValidator()
+validator := model.NewDefaultValidator()
 
 // Validate input against tool schema
 input := map[string]any{"a": 5, "b": 10}
-if err := validator.ValidateInput(tool.InputSchema, input); err != nil {
+if err := validator.ValidateInput(&tool, input); err != nil {
   log.Fatalf("Invalid input: %v", err)
+}
+```
+
+### Version Compatibility
+
+```go
+import "github.com/jonwraymond/toolfoundation/version"
+
+current := version.MustParse("v1.2.0")
+required := version.MustParse("v1.0.0")
+
+if !current.Compatible(required) {
+  log.Fatalf("version %s is not compatible with %s", current, required)
+}
+
+matrix := version.NewMatrix()
+matrix.Add(version.Compatibility{
+  Component:  "toolfoundation",
+  MinVersion: required,
+})
+
+ok, msg := matrix.Check("toolfoundation", current)
+if !ok {
+  log.Fatal(msg)
 }
 ```
 

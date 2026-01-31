@@ -9,6 +9,7 @@ format conversion for the ApertureStack tool framework.
 |---------|---------|
 | `model` | Canonical MCP tool schema definitions, validation, backend bindings |
 | `adapter` | Protocol-agnostic tool format conversion (MCP, OpenAI, Anthropic) |
+| `version` | Semantic version parsing, constraints, compatibility matrices |
 
 ## Installation
 
@@ -72,12 +73,42 @@ for _, w := range result.Warnings {
 }
 ```
 
+### Versioning Utilities (version package)
+
+```go
+import "github.com/jonwraymond/toolfoundation/version"
+
+v1 := version.MustParse("v1.2.0")
+v2 := version.MustParse("v1.3.1")
+
+if v2.GreaterThan(v1) {
+  fmt.Println("upgrade available")
+}
+
+matrix := version.NewMatrix()
+matrix.Add(version.Compatibility{
+  Component:  "toolexec",
+  MinVersion: version.MustParse("v1.0.0"),
+})
+
+ok, msg := matrix.Check("toolexec", v1)
+if !ok {
+  log.Fatal(msg)
+}
+```
+
 ## Key Features
 
 - **MCP-aligned**: Tool type embeds official MCP SDK types
 - **Protocol-agnostic**: Convert between MCP, OpenAI, and Anthropic formats
 - **Loss visibility**: Feature loss during conversion is tracked as warnings
 - **Minimal dependencies**: Foundation has minimal external dependencies
+
+## Schema Validation Policy
+
+Schema validation follows JSON Schema 2020-12 by default with draft-07 support.
+External `$ref` resolution is disabled to prevent network access. See
+[design notes](design-notes.md) for details and limitations.
 
 ## Links
 

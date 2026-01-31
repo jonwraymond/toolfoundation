@@ -12,7 +12,9 @@ go get github.com/jonwraymond/toolfoundation
 
 | Package | Description | Documentation |
 |---------|-------------|---------------|
-| TBD | TBD | [docs](./docs/) |
+| `model` | Canonical MCP tool schema definitions and validation | [docs](./docs/) |
+| `adapter` | Protocol-agnostic tool format conversion | [docs](./docs/) |
+| `version` | Semantic versioning, constraints, compatibility | [docs](./docs/) |
 
 ## License
 

@@ -31,6 +31,21 @@ and `adapter` for format conversion.
 - Schema validation uses JSON Schema draft 2020-12
 - Empty names, invalid characters, and missing schemas are rejected
 
+### Schema Validation Policy
+
+The default validator supports the following dialects:
+
+- JSON Schema 2020-12 (default)
+- JSON Schema draft-07
+
+External `$ref` resolution is **disabled** to prevent network access during
+validation. Validation behavior is deterministic and does not perform I/O.
+
+Limitations (from the underlying jsonschema-go implementation):
+
+- `format` is treated as annotation (not validated)
+- `contentEncoding` and `contentMediaType` are not validated
+
 ## adapter Package
 
 ### Design Decisions
@@ -65,6 +80,12 @@ and `adapter` for format conversion.
 | `enum/const` | Yes | Yes | Yes |
 
 *OpenAI supports pattern only in strict mode.
+
+### Feature Loss Warnings
+
+Adapters emit `FeatureLossWarning` entries when the target format does not
+support a schema feature used by the source. Conversions still succeed, but
+consumers should review warnings before exposing the converted tool to users.
 
 ## Dependencies
 
