@@ -95,4 +95,5 @@ consumers should review warnings before exposing the converted tool to users.
 ## Links
 
 - [index](index.md)
+- [tool schemas](schemas.md)
 - [user journey](user-journey.md)

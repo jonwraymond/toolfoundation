@@ -16,6 +16,12 @@ go get github.com/jonwraymond/toolfoundation
 | `adapter` | Protocol-agnostic tool format conversion | [docs](./docs/) |
 | `version` | Semantic versioning, constraints, compatibility | [docs](./docs/) |
 
+## Docs
+
+- [Tool schemas](./docs/schemas.md)
+- [Design notes](./docs/design-notes.md)
+- [User journey](./docs/user-journey.md)
+
 ## License
 
 MIT License - see [LICENSE](./LICENSE)

@@ -104,6 +104,13 @@ if !ok {
 - **Loss visibility**: Feature loss during conversion is tracked as warnings
 - **Minimal dependencies**: Foundation has minimal external dependencies
 
+## Schema contracts
+
+See the dedicated schema reference for field constraints, JSON Schema rules,
+and recommended patterns:
+
+- [tool schemas](schemas.md)
+
 ## Schema Validation Policy
 
 Schema validation follows JSON Schema 2020-12 by default with draft-07 support.
@@ -114,4 +121,5 @@ External `$ref` resolution is disabled to prevent network access. See
 
 - [model design notes](design-notes.md)
 - [user journey](user-journey.md)
+- [tool schemas](schemas.md)
 - [ai-tools-stack documentation](https://jonwraymond.github.io/ai-tools-stack/)
