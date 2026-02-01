@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/jonwraymond/toolfoundation/version"
 )
 
 func TestTool_ToolID(t *testing.T) {
@@ -247,6 +249,14 @@ func TestToolBackend_Validate(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "invalid Provider backend nil Provider",
+			backend: ToolBackend{
+				Kind:     BackendKindProvider,
+				Provider: nil, // Provider is nil but Kind is provider
+			},
+			wantErr: true,
 		},
 		{
 			name: "invalid Provider backend missing ProviderID",
@@ -794,5 +804,454 @@ func TestNormalizeTags(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNewMCPBackend(t *testing.T) {
+	backend := NewMCPBackend("my-server")
+
+	if backend.Kind != BackendKindMCP {
+		t.Errorf("Kind = %q, want %q", backend.Kind, BackendKindMCP)
+	}
+	if backend.MCP == nil {
+		t.Fatal("MCP should not be nil")
+	}
+	if backend.MCP.ServerName != "my-server" {
+		t.Errorf("ServerName = %q, want %q", backend.MCP.ServerName, "my-server")
+	}
+	if err := backend.Validate(); err != nil {
+		t.Errorf("Validate() error = %v", err)
+	}
+}
+
+func TestNewLocalBackend(t *testing.T) {
+	backend := NewLocalBackend("my-handler")
+
+	if backend.Kind != BackendKindLocal {
+		t.Errorf("Kind = %q, want %q", backend.Kind, BackendKindLocal)
+	}
+	if backend.Local == nil {
+		t.Fatal("Local should not be nil")
+	}
+	if backend.Local.Name != "my-handler" {
+		t.Errorf("Name = %q, want %q", backend.Local.Name, "my-handler")
+	}
+	if err := backend.Validate(); err != nil {
+		t.Errorf("Validate() error = %v", err)
+	}
+}
+
+func TestNewProviderBackend(t *testing.T) {
+	backend := NewProviderBackend("openai", "gpt-4-tool")
+
+	if backend.Kind != BackendKindProvider {
+		t.Errorf("Kind = %q, want %q", backend.Kind, BackendKindProvider)
+	}
+	if backend.Provider == nil {
+		t.Fatal("Provider should not be nil")
+	}
+	if backend.Provider.ProviderID != "openai" {
+		t.Errorf("ProviderID = %q, want %q", backend.Provider.ProviderID, "openai")
+	}
+	if backend.Provider.ToolID != "gpt-4-tool" {
+		t.Errorf("ToolID = %q, want %q", backend.Provider.ToolID, "gpt-4-tool")
+	}
+	if err := backend.Validate(); err != nil {
+		t.Errorf("Validate() error = %v", err)
+	}
+}
+
+func TestTool_Clone(t *testing.T) {
+	original := &Tool{
+		Tool: mcp.Tool{
+			Meta: mcp.Meta{
+				"traceId": "abc123",
+			},
+			Annotations: &mcp.ToolAnnotations{
+				Title:           "Annotated Title",
+				ReadOnlyHint:    true,
+				IdempotentHint:  true,
+				DestructiveHint: boolPtr(false),
+				OpenWorldHint:   boolPtr(true),
+			},
+			Name:        "clone-test",
+			Title:       "Clone Test Tool",
+			Description: "A tool for testing Clone()",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"input": map[string]any{"type": "string"},
+				},
+				"required": []any{"input"},
+			},
+			OutputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"result": map[string]any{"type": "boolean"},
+				},
+			},
+			Icons: []mcp.Icon{
+				{Source: "https://example.com/icon.png", MIMEType: "image/png"},
+			},
+		},
+		Namespace: "test-ns",
+		Version:   "1.2.3",
+		Tags:      []string{"alpha", "beta"},
+	}
+
+	clone := original.Clone()
+
+	// Verify clone is not the same pointer
+	if clone == original {
+		t.Error("Clone() should return a new pointer")
+	}
+
+	// Verify basic fields
+	if clone.Name != original.Name {
+		t.Errorf("Name = %q, want %q", clone.Name, original.Name)
+	}
+	if clone.Title != original.Title {
+		t.Errorf("Title = %q, want %q", clone.Title, original.Title)
+	}
+	if clone.Description != original.Description {
+		t.Errorf("Description = %q, want %q", clone.Description, original.Description)
+	}
+	if clone.Namespace != original.Namespace {
+		t.Errorf("Namespace = %q, want %q", clone.Namespace, original.Namespace)
+	}
+	if clone.Version != original.Version {
+		t.Errorf("Version = %q, want %q", clone.Version, original.Version)
+	}
+
+	// Verify Meta is a separate copy
+	if clone.Meta == nil {
+		t.Fatal("Meta should not be nil")
+	}
+	if clone.GetMeta()["traceId"] != "abc123" {
+		t.Errorf("Meta traceId = %v, want %q", clone.GetMeta()["traceId"], "abc123")
+	}
+	// Modify clone's Meta and verify original is unchanged
+	clone.Meta["newKey"] = "newValue"
+	if _, ok := original.Meta["newKey"]; ok {
+		t.Error("Modifying clone's Meta should not affect original")
+	}
+
+	// Verify Annotations is a separate copy
+	if clone.Annotations == nil {
+		t.Fatal("Annotations should not be nil")
+	}
+	if clone.Annotations.Title != original.Annotations.Title {
+		t.Errorf("Annotations.Title = %q, want %q", clone.Annotations.Title, original.Annotations.Title)
+	}
+	if clone.Annotations.ReadOnlyHint != original.Annotations.ReadOnlyHint {
+		t.Errorf("Annotations.ReadOnlyHint = %v, want %v", clone.Annotations.ReadOnlyHint, original.Annotations.ReadOnlyHint)
+	}
+	if *clone.Annotations.DestructiveHint != *original.Annotations.DestructiveHint {
+		t.Errorf("Annotations.DestructiveHint = %v, want %v", *clone.Annotations.DestructiveHint, *original.Annotations.DestructiveHint)
+	}
+	// Modify clone's Annotations and verify original is unchanged
+	clone.Annotations.Title = "Modified"
+	if original.Annotations.Title == "Modified" {
+		t.Error("Modifying clone's Annotations should not affect original")
+	}
+
+	// Verify Tags is a separate copy
+	if len(clone.Tags) != len(original.Tags) {
+		t.Errorf("Tags length = %d, want %d", len(clone.Tags), len(original.Tags))
+	}
+	clone.Tags[0] = "modified"
+	if original.Tags[0] == "modified" {
+		t.Error("Modifying clone's Tags should not affect original")
+	}
+
+	// Verify InputSchema is a separate copy
+	if clone.InputSchema == nil {
+		t.Fatal("InputSchema should not be nil")
+	}
+	cloneSchema := clone.InputSchema.(map[string]any)
+	cloneSchema["type"] = "array"
+	originalSchema := original.InputSchema.(map[string]any)
+	if originalSchema["type"] == "array" {
+		t.Error("Modifying clone's InputSchema should not affect original")
+	}
+
+	// Verify Icons is a separate copy
+	if len(clone.Icons) != len(original.Icons) {
+		t.Errorf("Icons length = %d, want %d", len(clone.Icons), len(original.Icons))
+	}
+}
+
+func TestTool_Clone_Nil(t *testing.T) {
+	var tool *Tool
+	clone := tool.Clone()
+	if clone != nil {
+		t.Error("Clone() of nil should return nil")
+	}
+}
+
+func TestTool_Clone_MinimalFields(t *testing.T) {
+	original := &Tool{
+		Tool: mcp.Tool{
+			Name:        "minimal",
+			InputSchema: map[string]any{"type": "object"},
+		},
+	}
+
+	clone := original.Clone()
+
+	if clone.Name != original.Name {
+		t.Errorf("Name = %q, want %q", clone.Name, original.Name)
+	}
+	if clone.Annotations != nil {
+		t.Error("Annotations should be nil for minimal tool")
+	}
+	if clone.Meta != nil {
+		t.Error("Meta should be nil for minimal tool")
+	}
+	if clone.Tags != nil {
+		t.Error("Tags should be nil for minimal tool")
+	}
+}
+
+func TestTool_ParsedVersion(t *testing.T) {
+	tests := []struct {
+		name       string
+		version    string
+		wantMajor  int
+		wantMinor  int
+		wantPatch  int
+		wantPrerel string
+		wantErr    bool
+	}{
+		{
+			name:      "simple version",
+			version:   "1.2.3",
+			wantMajor: 1,
+			wantMinor: 2,
+			wantPatch: 3,
+			wantErr:   false,
+		},
+		{
+			name:      "version with v prefix",
+			version:   "v2.0.0",
+			wantMajor: 2,
+			wantMinor: 0,
+			wantPatch: 0,
+			wantErr:   false,
+		},
+		{
+			name:       "version with prerelease",
+			version:    "1.0.0-alpha.1",
+			wantMajor:  1,
+			wantMinor:  0,
+			wantPatch:  0,
+			wantPrerel: "alpha.1",
+			wantErr:    false,
+		},
+		{
+			name:    "empty version",
+			version: "",
+			wantErr: true,
+		},
+		{
+			name:    "invalid version",
+			version: "not-a-version",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tool := &Tool{
+				Tool: mcp.Tool{
+					Name:        "test",
+					InputSchema: map[string]any{"type": "object"},
+				},
+				Version: tt.version,
+			}
+
+			got, err := tool.ParsedVersion()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParsedVersion() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+
+			if got.Major != tt.wantMajor {
+				t.Errorf("Major = %d, want %d", got.Major, tt.wantMajor)
+			}
+			if got.Minor != tt.wantMinor {
+				t.Errorf("Minor = %d, want %d", got.Minor, tt.wantMinor)
+			}
+			if got.Patch != tt.wantPatch {
+				t.Errorf("Patch = %d, want %d", got.Patch, tt.wantPatch)
+			}
+			if got.Prerelease != tt.wantPrerel {
+				t.Errorf("Prerelease = %q, want %q", got.Prerelease, tt.wantPrerel)
+			}
+		})
+	}
+}
+
+func TestTool_ParsedVersion_Comparison(t *testing.T) {
+	tool1 := &Tool{
+		Tool:    mcp.Tool{Name: "t1", InputSchema: map[string]any{"type": "object"}},
+		Version: "1.0.0",
+	}
+	tool2 := &Tool{
+		Tool:    mcp.Tool{Name: "t2", InputSchema: map[string]any{"type": "object"}},
+		Version: "2.0.0",
+	}
+
+	v1, err := tool1.ParsedVersion()
+	if err != nil {
+		t.Fatalf("ParsedVersion() error = %v", err)
+	}
+	v2, err := tool2.ParsedVersion()
+	if err != nil {
+		t.Fatalf("ParsedVersion() error = %v", err)
+	}
+
+	if !v1.LessThan(v2) {
+		t.Errorf("v1 (%v) should be less than v2 (%v)", v1, v2)
+	}
+	if !v2.GreaterThan(v1) {
+		t.Errorf("v2 (%v) should be greater than v1 (%v)", v2, v1)
+	}
+
+	// Test compatibility
+	tool3 := &Tool{
+		Tool:    mcp.Tool{Name: "t3", InputSchema: map[string]any{"type": "object"}},
+		Version: "1.5.0",
+	}
+	v3, _ := tool3.ParsedVersion()
+
+	if !v3.Compatible(v1) {
+		t.Errorf("v3 (%v) should be compatible with v1 (%v)", v3, v1)
+	}
+	if v3.Compatible(v2) {
+		t.Errorf("v3 (%v) should not be compatible with v2 (%v)", v3, v2)
+	}
+}
+
+// Verify _ import is used
+var _ = version.Version{}
+
+func TestNormalizeTags_MaxCount(t *testing.T) {
+	// Create more than 20 tags to test the count limit
+	tags := make([]string, 25)
+	for i := range tags {
+		tags[i] = "tag" + string(rune('a'+i%26))
+	}
+
+	result := NormalizeTags(tags)
+	if len(result) > 20 {
+		t.Errorf("NormalizeTags() returned %d tags, want max 20", len(result))
+	}
+}
+
+func TestTool_Validate_InvalidCharsMultiple(t *testing.T) {
+	// Test with multiple different invalid characters
+	tool := Tool{
+		Tool: mcp.Tool{
+			Name:        "bad@name#here",
+			Description: "desc",
+			InputSchema: map[string]any{"type": "object"},
+		},
+	}
+
+	err := tool.Validate()
+	if err == nil {
+		t.Fatal("Validate() expected error for multiple invalid characters")
+	}
+	// Should report both @ and #
+	if !strings.Contains(err.Error(), "@") || !strings.Contains(err.Error(), "#") {
+		t.Errorf("Validate() error should mention both invalid chars: %v", err)
+	}
+}
+
+func TestTool_Clone_NilInputSchema(t *testing.T) {
+	// Test Clone with nil schemas - covers deepCopyAny nil path
+	tool := &Tool{
+		Tool: mcp.Tool{
+			Name:        "test",
+			Description: "test tool",
+			InputSchema: nil, // nil schema
+		},
+	}
+
+	clone := tool.Clone()
+	if clone.InputSchema != nil {
+		t.Error("Clone() should preserve nil InputSchema")
+	}
+}
+
+func TestTool_Clone_WithUnmarshallableSchemaValue(t *testing.T) {
+	// Test Clone with a schema containing a channel (unmarshallable by JSON)
+	// This tests the deepCopyAny fallback path when json.Marshal fails
+	ch := make(chan int)
+	tool := &Tool{
+		Tool: mcp.Tool{
+			Name:        "test",
+			Description: "test tool",
+			InputSchema: map[string]any{
+				"type":    "object",
+				"channel": ch, // channels can't be marshaled to JSON
+			},
+		},
+	}
+
+	// Clone should not panic - it falls back to shallow copy on marshal error
+	clone := tool.Clone()
+	if clone == nil {
+		t.Fatal("Clone() should not return nil")
+	}
+	if clone.Name != tool.Name {
+		t.Errorf("Clone().Name = %q, want %q", clone.Name, tool.Name)
+	}
+}
+
+func TestTool_Clone_WithFuncInSchema(t *testing.T) {
+	// Test Clone with a schema containing a func (unmarshallable by JSON)
+	fn := func() {}
+	tool := &Tool{
+		Tool: mcp.Tool{
+			Name:        "test",
+			Description: "test tool",
+			InputSchema: map[string]any{
+				"type": "object",
+				"func": fn, // functions can't be marshaled to JSON
+			},
+			OutputSchema: map[string]any{
+				"type": "object",
+				"func": fn,
+			},
+		},
+	}
+
+	// Clone should not panic - it falls back to shallow copy on marshal error
+	clone := tool.Clone()
+	if clone == nil {
+		t.Fatal("Clone() should not return nil")
+	}
+}
+
+func TestNormalizeTags_AllSpecialChars(t *testing.T) {
+	// Tag with only special characters that get filtered out
+	tags := []string{"@#$%^&*()"}
+	result := NormalizeTags(tags)
+	if len(result) != 0 {
+		t.Errorf("NormalizeTags() = %v, want empty slice for all-special-char tag", result)
+	}
+}
+
+func TestNormalizeTags_WhitespaceOnly(t *testing.T) {
+	// Tag that becomes empty after Fields processing
+	tags := []string{"   ", "\t\n"}
+	result := NormalizeTags(tags)
+	if len(result) != 0 {
+		t.Errorf("NormalizeTags() = %v, want empty slice for whitespace-only tags", result)
 	}
 }

@@ -322,3 +322,111 @@ func TestMatrix_Negotiate_NoCompatible(t *testing.T) {
 		t.Error("Negotiate should fail when no compatible version exists")
 	}
 }
+
+func TestConstraint_Check_InvalidOperator(t *testing.T) {
+	// Create a constraint with an invalid operator to hit the default case
+	c := Constraint{
+		Op:      "!!",
+		Version: MustParse("1.0.0"),
+	}
+	v := MustParse("1.0.0")
+	if c.Check(v) {
+		t.Error("Constraint.Check() with invalid operator should return false")
+	}
+}
+
+func TestVersion_Compare_AllEqual(t *testing.T) {
+	// Test versions where all components are equal to hit compareInt return 0
+	// for major, minor, and patch comparisons
+	tests := []struct {
+		name string
+		a, b Version
+		want int
+	}{
+		{
+			name: "equal_major_minor_patch",
+			a:    Version{Major: 1, Minor: 2, Patch: 3},
+			b:    Version{Major: 1, Minor: 2, Patch: 3},
+			want: 0,
+		},
+		{
+			name: "equal_major_minor_different_patch",
+			a:    Version{Major: 1, Minor: 2, Patch: 3},
+			b:    Version{Major: 1, Minor: 2, Patch: 4},
+			want: -1,
+		},
+		{
+			name: "equal_major_different_minor",
+			a:    Version{Major: 1, Minor: 2, Patch: 3},
+			b:    Version{Major: 1, Minor: 3, Patch: 3},
+			want: -1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Compare(tt.b); got != tt.want {
+				t.Errorf("Compare() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMatrix_ConcurrentAccess(t *testing.T) {
+	// Test that Matrix is safe for concurrent access
+	m := NewMatrix()
+
+	// Pre-populate with some entries
+	m.Add(Compatibility{
+		Component:  "test",
+		MinVersion: MustParse("1.0.0"),
+	})
+
+	const goroutines = 10
+	const iterations = 100
+
+	done := make(chan bool, goroutines*3)
+
+	// Concurrent Add
+	for i := 0; i < goroutines; i++ {
+		go func(id int) {
+			for j := 0; j < iterations; j++ {
+				m.Add(Compatibility{
+					Component:  "component-" + string(rune('a'+id)),
+					MinVersion: MustParse("1.0.0"),
+				})
+			}
+			done <- true
+		}(i)
+	}
+
+	// Concurrent Check
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			for j := 0; j < iterations; j++ {
+				m.Check("test", MustParse("1.5.0"))
+			}
+			done <- true
+		}()
+	}
+
+	// Concurrent Negotiate
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			available := []Version{
+				MustParse("0.5.0"),
+				MustParse("1.0.0"),
+				MustParse("1.5.0"),
+			}
+			for j := 0; j < iterations; j++ {
+				_, _ = m.Negotiate("test", available)
+			}
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines
+	for i := 0; i < goroutines*3; i++ {
+		<-done
+	}
+}

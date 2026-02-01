@@ -54,20 +54,17 @@ fmt.Println(tool.ToolID()) // "github:get_repo"
 ### Converting Between Formats (adapter package)
 
 ```go
-import (
-  "github.com/jonwraymond/toolfoundation/adapter"
-  "github.com/jonwraymond/toolfoundation/adapter/adapters"
-)
+import "github.com/jonwraymond/toolfoundation/adapter"
 
-registry := adapter.NewRegistry()
-registry.Register(adapters.NewMCPAdapter())
-registry.Register(adapters.NewOpenAIAdapter())
+// Use the default registry with all built-in adapters
+registry := adapter.DefaultRegistry()
 
 result, err := registry.Convert(mcpTool, "mcp", "openai")
 if err != nil {
   log.Fatal(err)
 }
 
+// Check for feature loss warnings
 for _, w := range result.Warnings {
   log.Printf("Feature loss: %s", w)
 }

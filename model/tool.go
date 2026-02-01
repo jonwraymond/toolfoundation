@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/jonwraymond/toolfoundation/version"
 )
 
 // ErrInvalidToolID is returned when a tool ID string is malformed.
@@ -275,4 +277,127 @@ func FromJSON(data []byte) (*Tool, error) {
 		return nil, err
 	}
 	return &tool, nil
+}
+
+// NewMCPBackend creates a ToolBackend for an MCP server.
+func NewMCPBackend(serverName string) ToolBackend {
+	return ToolBackend{
+		Kind: BackendKindMCP,
+		MCP: &MCPBackend{
+			ServerName: serverName,
+		},
+	}
+}
+
+// NewLocalBackend creates a ToolBackend for local execution.
+func NewLocalBackend(name string) ToolBackend {
+	return ToolBackend{
+		Kind: BackendKindLocal,
+		Local: &LocalBackend{
+			Name: name,
+		},
+	}
+}
+
+// NewProviderBackend creates a ToolBackend for an external provider.
+func NewProviderBackend(providerID, toolID string) ToolBackend {
+	return ToolBackend{
+		Kind: BackendKindProvider,
+		Provider: &ProviderBackend{
+			ProviderID: providerID,
+			ToolID:     toolID,
+		},
+	}
+}
+
+// Clone creates a deep copy of the Tool.
+// The returned Tool is independent of the original.
+func (t *Tool) Clone() *Tool {
+	if t == nil {
+		return nil
+	}
+
+	clone := &Tool{
+		Tool: mcp.Tool{
+			Name:        t.Name,
+			Title:       t.Title,
+			Description: t.Description,
+		},
+		Namespace: t.Namespace,
+		Version:   t.Version,
+	}
+
+	// Deep copy Meta
+	if t.Meta != nil {
+		clone.Meta = make(mcp.Meta, len(t.Meta))
+		for k, v := range t.Meta {
+			clone.Meta[k] = v
+		}
+	}
+
+	// Deep copy Annotations
+	if t.Annotations != nil {
+		clone.Annotations = &mcp.ToolAnnotations{
+			Title:          t.Annotations.Title,
+			ReadOnlyHint:   t.Annotations.ReadOnlyHint,
+			IdempotentHint: t.Annotations.IdempotentHint,
+		}
+		if t.Annotations.DestructiveHint != nil {
+			v := *t.Annotations.DestructiveHint
+			clone.Annotations.DestructiveHint = &v
+		}
+		if t.Annotations.OpenWorldHint != nil {
+			v := *t.Annotations.OpenWorldHint
+			clone.Annotations.OpenWorldHint = &v
+		}
+	}
+
+	// Deep copy InputSchema (via JSON round-trip for any type)
+	if t.InputSchema != nil {
+		clone.InputSchema = deepCopyAny(t.InputSchema)
+	}
+
+	// Deep copy OutputSchema
+	if t.OutputSchema != nil {
+		clone.OutputSchema = deepCopyAny(t.OutputSchema)
+	}
+
+	// Deep copy Icons
+	if t.Icons != nil {
+		clone.Icons = make([]mcp.Icon, len(t.Icons))
+		copy(clone.Icons, t.Icons)
+	}
+
+	// Deep copy Tags
+	if t.Tags != nil {
+		clone.Tags = make([]string, len(t.Tags))
+		copy(clone.Tags, t.Tags)
+	}
+
+	return clone
+}
+
+// deepCopyAny creates a deep copy of an any value via JSON round-trip.
+func deepCopyAny(v any) any {
+	if v == nil {
+		return nil
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return v // fallback to shallow copy on error
+	}
+	var result any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return v // fallback to shallow copy on error
+	}
+	return result
+}
+
+// ParsedVersion returns the Tool's version as a structured version.Version.
+// Returns an error if the version string is empty or cannot be parsed.
+func (t *Tool) ParsedVersion() (version.Version, error) {
+	if t.Version == "" {
+		return version.Version{}, errors.New("tool has no version")
+	}
+	return version.Parse(t.Version)
 }

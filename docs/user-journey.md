@@ -50,34 +50,22 @@ fmt.Println(tool.ToolID()) // "calculator:add"
 
 ```go
 // Local handler backend
-tool.Backend = model.ToolBackend{
-  Kind: model.BackendKindLocal,
-  Name: "add_handler",
-}
+tool.Backend = model.NewLocalBackend("add_handler")
 
 // Or MCP server backend
-tool.Backend = model.ToolBackend{
-  Kind:       model.BackendKindMCP,
-  ServerName: "math-server",
-}
+tool.Backend = model.NewMCPBackend("math-server")
 ```
 
 ## 4. Convert to OpenAI Format
 
 ```go
-import (
-  "github.com/jonwraymond/toolfoundation/adapter"
-  "github.com/jonwraymond/toolfoundation/adapter/adapters"
-)
+import "github.com/jonwraymond/toolfoundation/adapter"
 
-// Set up the adapter registry
-registry := adapter.NewRegistry()
-registry.Register(adapters.NewMCPAdapter())
-registry.Register(adapters.NewOpenAIAdapter())
-registry.Register(adapters.NewAnthropicAdapter())
+// Use the default registry with all built-in adapters
+registry := adapter.DefaultRegistry()
 
 // Convert MCP tool to OpenAI format
-result, err := registry.Convert(tool.Tool, "mcp", "openai")
+result, err := registry.Convert(&tool, "mcp", "openai")
 if err != nil {
   log.Fatalf("Conversion failed: %v", err)
 }
@@ -87,8 +75,8 @@ for _, warning := range result.Warnings {
   log.Printf("Warning: %s", warning)
 }
 
-openaiTool := result.Tool.(adapters.OpenAIFunction)
-fmt.Printf("OpenAI function: %s\n", openaiTool.Name)
+openaiTool := result.Tool.(*adapter.OpenAITool)
+fmt.Printf("OpenAI function: %s\n", openaiTool.Function.Name)
 ```
 
 ## 5. Round-Trip Conversion

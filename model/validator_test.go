@@ -528,3 +528,232 @@ func TestSchemaValidator_Interface(t *testing.T) {
 	var _ SchemaValidator = (*DefaultValidator)(nil)
 	var _ SchemaValidator = NewDefaultValidator()
 }
+
+func TestDefaultValidator_Validate_JsonschemaSchemaValue(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test with jsonschema.Schema value (not pointer)
+	schema := jsonschema.Schema{
+		Type: "string",
+	}
+
+	err := v.Validate(schema, "hello")
+	if err != nil {
+		t.Errorf("Validate() with jsonschema.Schema value error = %v", err)
+	}
+
+	err = v.Validate(schema, 123)
+	if err == nil {
+		t.Error("Validate() with invalid instance should return error")
+	}
+}
+
+func TestDefaultValidator_Validate_NilJsonschemaSchema(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test with nil *jsonschema.Schema
+	var schema *jsonschema.Schema = nil
+
+	err := v.Validate(schema, "test")
+	if err == nil {
+		t.Error("Validate() with nil *jsonschema.Schema should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("Validate() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_Validate_EmptyRawMessage(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test with empty json.RawMessage
+	schema := json.RawMessage(``)
+
+	err := v.Validate(schema, "test")
+	if err == nil {
+		t.Error("Validate() with empty json.RawMessage should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("Validate() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_Validate_EmptyByteSlice(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test with empty []byte
+	schema := []byte{}
+
+	err := v.Validate(schema, "test")
+	if err == nil {
+		t.Error("Validate() with empty []byte should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("Validate() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_Validate_InvalidJsonRawMessage(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test with invalid JSON in RawMessage
+	schema := json.RawMessage(`{invalid json}`)
+
+	err := v.Validate(schema, "test")
+	if err == nil {
+		t.Error("Validate() with invalid JSON should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("Validate() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_Validate_InvalidJsonByteSlice(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test with invalid JSON in []byte
+	schema := []byte(`not valid json at all`)
+
+	err := v.Validate(schema, "test")
+	if err == nil {
+		t.Error("Validate() with invalid JSON []byte should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("Validate() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_Validate_SchemaDialectVariants(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test the prefix matching paths in checkDialect
+	// Note: Some variants pass our checkDialect but may fail in jsonschema library
+	// We test the ones that work end-to-end
+
+	tests := []struct {
+		name    string
+		schema  map[string]any
+		wantErr bool
+	}{
+		{
+			name: "draft-07 alt without hash",
+			schema: map[string]any{
+				"$schema": "http://json-schema.org/draft-07/schema",
+				"type":    "string",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := v.Validate(tt.schema, "test")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestDefaultValidator_checkDialect_Prefixes(t *testing.T) {
+	v := NewDefaultValidator()
+
+	// Test that prefix matching works by checking the paths directly
+	// These may not fully validate but should pass checkDialect
+
+	tests := []struct {
+		name       string
+		schemaURI  string
+		shouldPass bool // passes checkDialect (not full validation)
+	}{
+		{
+			name:       "2020-12 meta subpath",
+			schemaURI:  "https://json-schema.org/draft/2020-12/meta/core",
+			shouldPass: true,
+		},
+		{
+			name:       "draft-07 subpath",
+			schemaURI:  "http://json-schema.org/draft-07/links",
+			shouldPass: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			schema := &jsonschema.Schema{
+				Schema: tt.schemaURI,
+				Type:   "string",
+			}
+
+			// Call checkDialect directly via Validate path with a copy
+			schemaCopy := *schema
+			err := v.Validate(&schemaCopy, "test")
+
+			// We only care if it passes the dialect check, not full validation
+			// If it contains "unsupported" it failed dialect check
+			if tt.shouldPass && err != nil && strings.Contains(err.Error(), "unsupported") {
+				t.Errorf("checkDialect should pass for %s but got: %v", tt.schemaURI, err)
+			}
+		})
+	}
+}
+
+func TestDefaultValidator_ValidateInput_NilTool(t *testing.T) {
+	v := NewDefaultValidator()
+
+	err := v.ValidateInput(nil, map[string]any{})
+	if err == nil {
+		t.Error("ValidateInput() with nil tool should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("ValidateInput() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_ValidateOutput_NilTool(t *testing.T) {
+	v := NewDefaultValidator()
+
+	err := v.ValidateOutput(nil, map[string]any{})
+	if err == nil {
+		t.Error("ValidateOutput() with nil tool should return error")
+	}
+	if !strings.Contains(err.Error(), ErrInvalidSchema.Error()) {
+		t.Errorf("ValidateOutput() error = %v, want error containing %v", err, ErrInvalidSchema)
+	}
+}
+
+func TestDefaultValidator_Validate_UnmarshallableMapSchema(t *testing.T) {
+	// Test with a map[string]any that contains an unmarshallable type
+	// This should trigger the json.Marshal error path in toJSONSchema
+	v := NewDefaultValidator()
+
+	ch := make(chan int)
+	schema := map[string]any{
+		"type":    "object",
+		"channel": ch, // channels can't be marshaled to JSON
+	}
+
+	err := v.Validate(schema, map[string]any{})
+	if err == nil {
+		t.Error("Validate() with unmarshallable schema should return error")
+	}
+	if !strings.Contains(err.Error(), "marshal") {
+		t.Errorf("Validate() error = %v, want error about marshaling", err)
+	}
+}
+
+func TestDefaultValidator_Validate_InvalidByteSliceJson(t *testing.T) {
+	// Test byte slice with invalid JSON that can't be unmarshaled
+	v := NewDefaultValidator()
+
+	// Invalid JSON - missing closing brace
+	schema := []byte(`{"type": "object"`)
+
+	err := v.Validate(schema, map[string]any{})
+	if err == nil {
+		t.Error("Validate() with invalid JSON byte slice should return error")
+	}
+	if !strings.Contains(err.Error(), "parse") {
+		t.Errorf("Validate() error = %v, want error about parsing", err)
+	}
+}

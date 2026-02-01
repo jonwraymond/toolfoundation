@@ -6,7 +6,6 @@ import "github.com/modelcontextprotocol/go-sdk/mcp"
 // Use NewTool to create a builder, chain methods, and call Build() or MustBuild().
 type ToolBuilder struct {
 	tool Tool
-	errs []error
 }
 
 // NewTool creates a new ToolBuilder with the given tool name.

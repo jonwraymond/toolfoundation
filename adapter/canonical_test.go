@@ -446,6 +446,167 @@ func TestJSONSchema_ToMap_Combinators(t *testing.T) {
 	}
 }
 
+func TestJSONSchema_ToMap_OneOf(t *testing.T) {
+	s := &JSONSchema{
+		OneOf: []*JSONSchema{
+			{Const: "a"},
+			{Const: "b"},
+		},
+	}
+
+	got := s.ToMap()
+
+	oneOf, ok := got["oneOf"].([]any)
+	if !ok {
+		t.Fatalf("oneOf is not []any, got %T", got["oneOf"])
+	}
+
+	if len(oneOf) != 2 {
+		t.Fatalf("oneOf length = %d, want 2", len(oneOf))
+	}
+
+	first, ok := oneOf[0].(map[string]any)
+	if !ok {
+		t.Fatalf("oneOf[0] is not map[string]any, got %T", oneOf[0])
+	}
+
+	if first["const"] != "a" {
+		t.Errorf("oneOf[0].const = %v, want %q", first["const"], "a")
+	}
+}
+
+func TestJSONSchema_ToMap_AllOf(t *testing.T) {
+	s := &JSONSchema{
+		AllOf: []*JSONSchema{
+			{Type: "object"},
+			{Required: []string{"id"}},
+		},
+	}
+
+	got := s.ToMap()
+
+	allOf, ok := got["allOf"].([]any)
+	if !ok {
+		t.Fatalf("allOf is not []any, got %T", got["allOf"])
+	}
+
+	if len(allOf) != 2 {
+		t.Fatalf("allOf length = %d, want 2", len(allOf))
+	}
+
+	first, ok := allOf[0].(map[string]any)
+	if !ok {
+		t.Fatalf("allOf[0] is not map[string]any, got %T", allOf[0])
+	}
+
+	if first["type"] != "object" {
+		t.Errorf("allOf[0].type = %v, want %q", first["type"], "object")
+	}
+}
+
+func TestJSONSchema_ToMap_Not(t *testing.T) {
+	s := &JSONSchema{
+		Not: &JSONSchema{
+			Const: "",
+		},
+	}
+
+	got := s.ToMap()
+
+	notSchema, ok := got["not"].(map[string]any)
+	if !ok {
+		t.Fatalf("not is not map[string]any, got %T", got["not"])
+	}
+
+	if notSchema["const"] != "" {
+		t.Errorf("not.const = %v, want empty string", notSchema["const"])
+	}
+}
+
+func TestJSONSchema_ToMap_Items(t *testing.T) {
+	s := &JSONSchema{
+		Type: "array",
+		Items: &JSONSchema{
+			Type:    "string",
+			Pattern: "^[a-z]+$",
+		},
+	}
+
+	got := s.ToMap()
+
+	items, ok := got["items"].(map[string]any)
+	if !ok {
+		t.Fatalf("items is not map[string]any, got %T", got["items"])
+	}
+
+	if items["type"] != "string" {
+		t.Errorf("items.type = %v, want %q", items["type"], "string")
+	}
+	if items["pattern"] != "^[a-z]+$" {
+		t.Errorf("items.pattern = %v, want %q", items["pattern"], "^[a-z]+$")
+	}
+}
+
+func TestJSONSchema_ToMap_ConstAndDefault(t *testing.T) {
+	s := &JSONSchema{
+		Type:    "string",
+		Const:   "fixed-value",
+		Default: "default-value",
+	}
+
+	got := s.ToMap()
+
+	if got["const"] != "fixed-value" {
+		t.Errorf("const = %v, want %q", got["const"], "fixed-value")
+	}
+	if got["default"] != "default-value" {
+		t.Errorf("default = %v, want %q", got["default"], "default-value")
+	}
+}
+
+func TestJSONSchema_ToMap_Format(t *testing.T) {
+	s := &JSONSchema{
+		Type:   "string",
+		Format: "date-time",
+	}
+
+	got := s.ToMap()
+
+	if got["format"] != "date-time" {
+		t.Errorf("format = %v, want %q", got["format"], "date-time")
+	}
+}
+
+func TestJSONSchema_ToMap_Enum(t *testing.T) {
+	s := &JSONSchema{
+		Type: "string",
+		Enum: []any{"red", "green", "blue"},
+	}
+
+	got := s.ToMap()
+
+	enum, ok := got["enum"].([]any)
+	if !ok {
+		t.Fatalf("enum is not []any, got %T", got["enum"])
+	}
+
+	if len(enum) != 3 {
+		t.Errorf("enum length = %d, want 3", len(enum))
+	}
+	if enum[0] != "red" {
+		t.Errorf("enum[0] = %v, want %q", enum[0], "red")
+	}
+}
+
+func TestJSONSchema_ToMap_Nil(t *testing.T) {
+	var s *JSONSchema
+	got := s.ToMap()
+
+	if got != nil {
+		t.Errorf("ToMap() on nil = %v, want nil", got)
+	}
+}
+
 func TestCanonicalTool_Fields(t *testing.T) {
 	// Verify all expected fields exist on CanonicalTool
 	tool := CanonicalTool{
