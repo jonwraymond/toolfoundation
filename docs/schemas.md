@@ -167,6 +167,9 @@ The MCP-allowed (but less strict) variant:
    - Useful for advanced constructs not easily expressed in tags.
 3. **Raw map/JSON schema**
    - Fully supported, but most error-prone.
+4. **Schema validation libraries** (implementation detail)
+   - `github.com/santhosh-tekuri/jsonschema` is commonly used for
+     fast validation and supports 2020-12 and draft-07.
 
 ## Links
 
