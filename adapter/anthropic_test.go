@@ -160,6 +160,34 @@ func TestAnthropicAdapter_ToCanonical(t *testing.T) {
 	}
 }
 
+func TestAnthropicAdapter_ToCanonical_InputExamples(t *testing.T) {
+	adapter := NewAnthropicAdapter()
+
+	input := &AnthropicTool{
+		Name:        "example-tool",
+		Description: "tool with examples",
+		InputSchema: map[string]any{"type": "object"},
+		InputExamples: []any{
+			map[string]any{"query": "hello"},
+			map[string]any{"query": "world"},
+		},
+	}
+
+	ct, err := adapter.ToCanonical(input)
+	if err != nil {
+		t.Fatalf("ToCanonical() error = %v", err)
+	}
+	if ct.SourceMeta == nil {
+		t.Fatalf("SourceMeta should not be nil")
+	}
+	if _, ok := ct.SourceMeta["input_examples"]; !ok {
+		t.Fatalf("input_examples should be preserved in SourceMeta")
+	}
+	if len(ct.Examples) == 0 {
+		t.Fatalf("Examples should be populated from input_examples")
+	}
+}
+
 func TestAnthropicAdapter_ToCanonical_CacheControl(t *testing.T) {
 	adapter := NewAnthropicAdapter()
 
@@ -254,6 +282,32 @@ func TestAnthropicAdapter_FromCanonical(t *testing.T) {
 				t.Errorf("Name = %q, want %q", tool.Name, tt.wantName)
 			}
 		})
+	}
+}
+
+func TestAnthropicAdapter_FromCanonical_InputExamples(t *testing.T) {
+	adapter := NewAnthropicAdapter()
+
+	ct := &CanonicalTool{
+		Name:        "example-tool",
+		Description: "tool with examples",
+		InputSchema: &JSONSchema{Type: "object"},
+		SourceMeta: map[string]any{
+			"input_examples": []any{
+				map[string]any{"query": "hello"},
+				map[string]any{"query": "world"},
+			},
+		},
+	}
+
+	result, err := adapter.FromCanonical(ct)
+	if err != nil {
+		t.Fatalf("FromCanonical() error = %v", err)
+	}
+
+	tool := result.(*AnthropicTool)
+	if len(tool.InputExamples) != 2 {
+		t.Fatalf("InputExamples length = %d, want 2", len(tool.InputExamples))
 	}
 }
 

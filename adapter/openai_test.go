@@ -188,6 +188,28 @@ func TestOpenAIAdapter_ToCanonical(t *testing.T) {
 	}
 }
 
+func TestOpenAIAdapter_ToCanonical_StrictPreserved(t *testing.T) {
+	adapter := NewOpenAIAdapter()
+
+	ct, err := adapter.ToCanonical(&OpenAITool{
+		Type: "function",
+		Function: OpenAIFunction{
+			Name:       "strict-fn",
+			Parameters: map[string]any{"type": "object"},
+			Strict:     boolPtr(true),
+		},
+	})
+	if err != nil {
+		t.Fatalf("ToCanonical() error = %v", err)
+	}
+	if ct.SourceMeta == nil {
+		t.Fatalf("SourceMeta should not be nil")
+	}
+	if strict, ok := ct.SourceMeta["strict"].(bool); !ok || !strict {
+		t.Fatalf("strict should be preserved in SourceMeta")
+	}
+}
+
 func TestOpenAIAdapter_ToCanonical_StrictMode(t *testing.T) {
 	adapter := NewOpenAIAdapter()
 

@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -8,10 +9,11 @@ import (
 // AnthropicTool represents the Anthropic tool format.
 // Based on Anthropic API spec - defined locally to avoid SDK coupling.
 type AnthropicTool struct {
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description,omitempty"`
-	InputSchema  map[string]any         `json:"input_schema"`
-	CacheControl *AnthropicCacheControl `json:"cache_control,omitempty"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description,omitempty"`
+	InputSchema   map[string]any         `json:"input_schema"`
+	InputExamples []any                  `json:"input_examples,omitempty"`
+	CacheControl  *AnthropicCacheControl `json:"cache_control,omitempty"`
 }
 
 // AnthropicCacheControl for prompt caching.
@@ -116,6 +118,17 @@ func (a *AnthropicAdapter) ToCanonical(raw any) (*CanonicalTool, error) {
 	if tool.CacheControl != nil {
 		ct.SourceMeta["cache_control"] = tool.CacheControl
 	}
+	if len(tool.InputExamples) > 0 {
+		ct.SourceMeta["input_examples"] = tool.InputExamples
+		// Best-effort: convert examples to strings for canonical Examples.
+		if len(ct.Examples) == 0 {
+			for _, example := range tool.InputExamples {
+				if data, err := json.Marshal(example); err == nil {
+					ct.Examples = append(ct.Examples, string(data))
+				}
+			}
+		}
+	}
 
 	return ct, nil
 }
@@ -155,6 +168,17 @@ func (a *AnthropicAdapter) FromCanonical(ct *CanonicalTool) (any, error) {
 	if ct.SourceMeta != nil {
 		if cc, ok := ct.SourceMeta["cache_control"].(*AnthropicCacheControl); ok {
 			tool.CacheControl = cc
+		}
+		if rawExamples, ok := ct.SourceMeta["input_examples"]; ok {
+			switch v := rawExamples.(type) {
+			case []any:
+				tool.InputExamples = v
+			case []map[string]any:
+				tool.InputExamples = make([]any, 0, len(v))
+				for _, ex := range v {
+					tool.InputExamples = append(tool.InputExamples, ex)
+				}
+			}
 		}
 	}
 
