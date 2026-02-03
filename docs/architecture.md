@@ -42,9 +42,12 @@ toolfoundation/
 │  ┌─────────────┴───────────────┐                       │
 │  │          adapter            │                        │
 │  │  - CanonicalTool            │                        │
+│  │  - CanonicalProvider        │                        │
 │  │  - MCPAdapter               │                        │
 │  │  - OpenAIAdapter            │                        │
 │  │  - AnthropicAdapter         │                        │
+│  │  - A2AAdapter               │                        │
+│  │  - GeminiAdapter            │                        │
 │  │  - AdapterRegistry          │                        │
 │  └─────────────────────────────┘                        │
 │                                                         │
@@ -77,8 +80,9 @@ toolfoundation/
 **Depends on: model**
 
 - `CanonicalTool` - intermediate representation
+- `CanonicalProvider` - provider/agent metadata representation
 - `Adapter` interface for format converters
-- Built-in adapters: MCP, OpenAI, Anthropic
+- Built-in adapters: MCP, OpenAI, Anthropic, A2A, Gemini
 - `AdapterRegistry` for managing converters
 - Feature loss detection and warnings
 

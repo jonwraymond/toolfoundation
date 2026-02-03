@@ -14,7 +14,7 @@ and `adapter` for format conversion.
    MCP Go SDK rather than reimplementing the fields. This ensures 1:1 spec
    compatibility while allowing extension.
 
-2. **Namespace + Name = ID**: Tool IDs are `namespace:name` format, providing
+2. **Namespace + Name (+ Version) = ID**: Tool IDs are `namespace:name:version` when version is set (otherwise `namespace:name`), providing
    stable identifiers across registry operations.
 
 3. **Backend Abstraction**: `ToolBackend` supports three kinds:

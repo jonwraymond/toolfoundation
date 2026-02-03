@@ -643,6 +643,108 @@ func TestMCPAdapter_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestMCPAdapter_ToCanonical_MetaFields(t *testing.T) {
+	adapter := NewMCPAdapter()
+
+	tool := &model.Tool{
+		Tool: mcp.Tool{
+			Name:        "meta-tool",
+			Description: "meta tool",
+			InputSchema: map[string]any{"type": "object"},
+			Meta: mcp.Meta{
+				"summary":              "short summary",
+				"category":             "utility",
+				"inputModes":           []any{"application/json"},
+				"outputModes":          []any{"application/json"},
+				"examples":             []any{"example"},
+				"deterministic":        true,
+				"streaming":            true,
+				"securitySchemes":      map[string]any{"apiKey": map[string]any{"type": "apiKey"}},
+				"securityRequirements": []any{map[string]any{"apiKey": []any{}}},
+				"uiHints":              map[string]any{"layout": "compact"},
+			},
+		},
+	}
+
+	ct, err := adapter.ToCanonical(tool)
+	if err != nil {
+		t.Fatalf("ToCanonical() error = %v", err)
+	}
+	if ct.Summary != "short summary" {
+		t.Errorf("Summary = %q, want %q", ct.Summary, "short summary")
+	}
+	if ct.Category != "utility" {
+		t.Errorf("Category = %q, want %q", ct.Category, "utility")
+	}
+	if len(ct.InputModes) != 1 || ct.InputModes[0] != "application/json" {
+		t.Errorf("InputModes = %v, want [application/json]", ct.InputModes)
+	}
+	if len(ct.OutputModes) != 1 || ct.OutputModes[0] != "application/json" {
+		t.Errorf("OutputModes = %v, want [application/json]", ct.OutputModes)
+	}
+	if len(ct.Examples) != 1 || ct.Examples[0] != "example" {
+		t.Errorf("Examples = %v, want [example]", ct.Examples)
+	}
+	if ct.Deterministic == nil || !*ct.Deterministic {
+		t.Errorf("Deterministic = %v, want true", ct.Deterministic)
+	}
+	if ct.Streaming == nil || !*ct.Streaming {
+		t.Errorf("Streaming = %v, want true", ct.Streaming)
+	}
+	if ct.SecuritySchemes == nil || ct.SecuritySchemes["apiKey"] == nil {
+		t.Error("SecuritySchemes missing apiKey")
+	}
+	if len(ct.SecurityRequirements) != 1 {
+		t.Errorf("SecurityRequirements length = %d, want 1", len(ct.SecurityRequirements))
+	}
+	if ct.UIHints["layout"] != "compact" {
+		t.Errorf("UIHints layout = %v, want compact", ct.UIHints["layout"])
+	}
+}
+
+func TestMCPAdapter_FromCanonical_MetaFields(t *testing.T) {
+	adapter := NewMCPAdapter()
+
+	deterministic := true
+	streaming := true
+
+	ct := &CanonicalTool{
+		Name:          "meta-tool",
+		Description:   "meta tool",
+		InputSchema:   &JSONSchema{Type: "object"},
+		Summary:       "short summary",
+		Category:      "utility",
+		InputModes:    []string{"application/json"},
+		OutputModes:   []string{"application/json"},
+		Examples:      []string{"example"},
+		Deterministic: &deterministic,
+		Streaming:     &streaming,
+		SecuritySchemes: map[string]SecurityScheme{
+			"apiKey": {"type": "apiKey"},
+		},
+		SecurityRequirements: []SecurityRequirement{
+			{"apiKey": {}},
+		},
+		UIHints: map[string]any{"layout": "compact"},
+	}
+
+	raw, err := adapter.FromCanonical(ct)
+	if err != nil {
+		t.Fatalf("FromCanonical() error = %v", err)
+	}
+
+	tool := raw.(*model.Tool)
+	if tool.Meta == nil {
+		t.Fatal("Meta is nil")
+	}
+	if tool.Meta["summary"] != "short summary" {
+		t.Errorf("meta.summary = %v, want short summary", tool.Meta["summary"])
+	}
+	if tool.Meta["category"] != "utility" {
+		t.Errorf("meta.category = %v, want utility", tool.Meta["category"])
+	}
+}
+
 func TestMCPAdapter_ImplementsInterface(t *testing.T) {
 	var _ Adapter = (*MCPAdapter)(nil)
 	var _ Adapter = NewMCPAdapter()

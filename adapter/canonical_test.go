@@ -82,38 +82,72 @@ func TestJSONSchema_DeepCopy_Nil(t *testing.T) {
 func TestJSONSchema_DeepCopy_Simple(t *testing.T) {
 	min := 1.0
 	max := 100.0
+	multipleOf := 2.0
 	minLen := 1
 	maxLen := 50
+	minItems := 1
+	maxItems := 5
+	minProps := 1
+	maxProps := 3
+	uniqueItems := true
+	nullable := true
+	deprecated := true
+	readOnly := true
+	writeOnly := true
 	additionalProps := false
 
 	original := &JSONSchema{
+		Title:                "Sample",
 		Type:                 "object",
 		Description:          "A test schema",
+		Examples:             []any{"example"},
 		Pattern:              "^[a-z]+$",
 		Format:               "email",
+		MultipleOf:           &multipleOf,
 		Minimum:              &min,
 		Maximum:              &max,
 		MinLength:            &minLen,
 		MaxLength:            &maxLen,
+		MinItems:             &minItems,
+		MaxItems:             &maxItems,
+		MinProperties:        &minProps,
+		MaxProperties:        &maxProps,
+		UniqueItems:          &uniqueItems,
 		AdditionalProperties: &additionalProps,
+		Nullable:             &nullable,
+		Deprecated:           &deprecated,
+		ReadOnly:             &readOnly,
+		WriteOnly:            &writeOnly,
 	}
 
 	copied := original.DeepCopy()
 
 	// Verify values are equal
+	if copied.Title != original.Title {
+		t.Errorf("Title = %q, want %q", copied.Title, original.Title)
+	}
 	if copied.Type != original.Type {
 		t.Errorf("Type = %q, want %q", copied.Type, original.Type)
 	}
 	if copied.Description != original.Description {
 		t.Errorf("Description = %q, want %q", copied.Description, original.Description)
 	}
+	if len(copied.Examples) != len(original.Examples) {
+		t.Errorf("Examples length = %d, want %d", len(copied.Examples), len(original.Examples))
+	}
 	if *copied.Minimum != *original.Minimum {
 		t.Errorf("Minimum = %v, want %v", *copied.Minimum, *original.Minimum)
+	}
+	if *copied.MultipleOf != *original.MultipleOf {
+		t.Errorf("MultipleOf = %v, want %v", *copied.MultipleOf, *original.MultipleOf)
 	}
 
 	// Verify no aliasing of pointers
 	if copied.Minimum == original.Minimum {
 		t.Error("Minimum pointer is aliased, want deep copy")
+	}
+	if copied.MultipleOf == original.MultipleOf {
+		t.Error("MultipleOf pointer is aliased, want deep copy")
 	}
 	if copied.AdditionalProperties == original.AdditionalProperties {
 		t.Error("AdditionalProperties pointer is aliased, want deep copy")
@@ -260,7 +294,9 @@ func TestJSONSchema_ToMap_Empty(t *testing.T) {
 func TestJSONSchema_ToMap_Simple(t *testing.T) {
 	s := &JSONSchema{
 		Type:        "string",
+		Title:       "Label",
 		Description: "A string field",
+		Examples:    []any{"alpha"},
 	}
 
 	got := s.ToMap()
@@ -268,8 +304,14 @@ func TestJSONSchema_ToMap_Simple(t *testing.T) {
 	if got["type"] != "string" {
 		t.Errorf("type = %v, want %q", got["type"], "string")
 	}
+	if got["title"] != "Label" {
+		t.Errorf("title = %v, want %q", got["title"], "Label")
+	}
 	if got["description"] != "A string field" {
 		t.Errorf("description = %v, want %q", got["description"], "A string field")
+	}
+	if _, ok := got["examples"]; !ok {
+		t.Error("examples should be present when set")
 	}
 }
 
@@ -296,20 +338,35 @@ func TestJSONSchema_ToMap_OmitsZeroFields(t *testing.T) {
 func TestJSONSchema_ToMap_WithConstraints(t *testing.T) {
 	min := 0.0
 	max := 100.0
+	multipleOf := 2.0
 	minLen := 1
 	maxLen := 50
+	minItems := 1
+	maxItems := 3
+	minProps := 1
+	maxProps := 2
+	uniqueItems := true
 
 	s := &JSONSchema{
-		Type:      "number",
-		Minimum:   &min,
-		Maximum:   &max,
-		MinLength: &minLen,
-		MaxLength: &maxLen,
-		Pattern:   "^\\d+$",
+		Type:          "number",
+		MultipleOf:    &multipleOf,
+		Minimum:       &min,
+		Maximum:       &max,
+		MinLength:     &minLen,
+		MaxLength:     &maxLen,
+		MinItems:      &minItems,
+		MaxItems:      &maxItems,
+		MinProperties: &minProps,
+		MaxProperties: &maxProps,
+		UniqueItems:   &uniqueItems,
+		Pattern:       "^\\d+$",
 	}
 
 	got := s.ToMap()
 
+	if got["multipleOf"] != multipleOf {
+		t.Errorf("multipleOf = %v, want %v", got["multipleOf"], multipleOf)
+	}
 	if got["minimum"] != min {
 		t.Errorf("minimum = %v, want %v", got["minimum"], min)
 	}
@@ -321,6 +378,21 @@ func TestJSONSchema_ToMap_WithConstraints(t *testing.T) {
 	}
 	if got["maxLength"] != maxLen {
 		t.Errorf("maxLength = %v, want %v", got["maxLength"], maxLen)
+	}
+	if got["minItems"] != minItems {
+		t.Errorf("minItems = %v, want %v", got["minItems"], minItems)
+	}
+	if got["maxItems"] != maxItems {
+		t.Errorf("maxItems = %v, want %v", got["maxItems"], maxItems)
+	}
+	if got["minProperties"] != minProps {
+		t.Errorf("minProperties = %v, want %v", got["minProperties"], minProps)
+	}
+	if got["maxProperties"] != maxProps {
+		t.Errorf("maxProperties = %v, want %v", got["maxProperties"], maxProps)
+	}
+	if got["uniqueItems"] != uniqueItems {
+		t.Errorf("uniqueItems = %v, want %v", got["uniqueItems"], uniqueItems)
 	}
 	if got["pattern"] != "^\\d+$" {
 		t.Errorf("pattern = %v, want %q", got["pattern"], "^\\d+$")

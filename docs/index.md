@@ -8,7 +8,7 @@ format conversion for the ApertureStack tool framework.
 | Package | Purpose |
 |---------|---------|
 | `model` | Canonical MCP tool schema definitions, validation, backend bindings |
-| `adapter` | Protocol-agnostic tool format conversion (MCP, OpenAI, Anthropic) |
+| `adapter` | Protocol-agnostic tool format conversion (MCP, OpenAI, Anthropic, A2A, Gemini) |
 | `version` | Semantic version parsing, constraints, compatibility matrices |
 
 ## Installation
@@ -48,7 +48,7 @@ if err := tool.Validate(); err != nil {
   log.Fatal(err)
 }
 
-fmt.Println(tool.ToolID()) // "github:get_repo"
+fmt.Println(tool.ToolID()) // "github:get_repo" (or "github:get_repo:1.0.0" when version is set)
 ```
 
 ### Converting Between Formats (adapter package)

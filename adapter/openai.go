@@ -43,17 +43,29 @@ var openAIFeatures = map[SchemaFeature]bool{
 	FeatureMaximum:              true,
 	FeatureMinLength:            true,
 	FeatureMaxLength:            true,
+	FeatureMultipleOf:           true,
+	FeatureMinItems:             true,
+	FeatureMaxItems:             true,
+	FeatureMinProperties:        true,
+	FeatureMaxProperties:        true,
+	FeatureUniqueItems:          true,
 	FeatureConst:                true,
 
 	// NOT supported features
-	FeatureRef:     false,
-	FeatureDefs:    false,
-	FeatureAnyOf:   false,
-	FeatureOneOf:   false,
-	FeatureAllOf:   false,
-	FeatureNot:     false,
-	FeaturePattern: false,
-	FeatureFormat:  false,
+	FeatureRef:        false,
+	FeatureDefs:       false,
+	FeatureAnyOf:      false,
+	FeatureOneOf:      false,
+	FeatureAllOf:      false,
+	FeatureNot:        false,
+	FeaturePattern:    false,
+	FeatureFormat:     false,
+	FeatureTitle:      false,
+	FeatureExamples:   false,
+	FeatureNullable:   false,
+	FeatureDeprecated: false,
+	FeatureReadOnly:   false,
+	FeatureWriteOnly:  false,
 }
 
 // ToCanonical converts an OpenAI tool to the canonical format.
@@ -134,7 +146,7 @@ func (a *OpenAIAdapter) FromCanonical(ct *CanonicalTool) (any, error) {
 
 	fn := OpenAIFunction{
 		Name:        ct.Name,
-		Description: ct.Description,
+		Description: canonicalDescription(ct),
 	}
 
 	// Convert InputSchema to parameters map, filtering unsupported features
@@ -177,6 +189,10 @@ func filterOpenAISchema(schema *JSONSchema) *JSONSchema {
 	}
 
 	// Copy supported pointer fields
+	if schema.MultipleOf != nil {
+		v := *schema.MultipleOf
+		filtered.MultipleOf = &v
+	}
 	if schema.Minimum != nil {
 		v := *schema.Minimum
 		filtered.Minimum = &v
@@ -192,6 +208,26 @@ func filterOpenAISchema(schema *JSONSchema) *JSONSchema {
 	if schema.MaxLength != nil {
 		v := *schema.MaxLength
 		filtered.MaxLength = &v
+	}
+	if schema.MinItems != nil {
+		v := *schema.MinItems
+		filtered.MinItems = &v
+	}
+	if schema.MaxItems != nil {
+		v := *schema.MaxItems
+		filtered.MaxItems = &v
+	}
+	if schema.MinProperties != nil {
+		v := *schema.MinProperties
+		filtered.MinProperties = &v
+	}
+	if schema.MaxProperties != nil {
+		v := *schema.MaxProperties
+		filtered.MaxProperties = &v
+	}
+	if schema.UniqueItems != nil {
+		v := *schema.UniqueItems
+		filtered.UniqueItems = &v
 	}
 	if schema.AdditionalProperties != nil {
 		v := *schema.AdditionalProperties

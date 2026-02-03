@@ -39,6 +39,30 @@ const (
 	FeatureConst
 	// FeatureDefault provides a default value
 	FeatureDefault
+	// FeatureTitle is a schema title
+	FeatureTitle
+	// FeatureExamples provides example values
+	FeatureExamples
+	// FeatureMultipleOf is numeric multiple constraint
+	FeatureMultipleOf
+	// FeatureMinItems is minimum array length
+	FeatureMinItems
+	// FeatureMaxItems is maximum array length
+	FeatureMaxItems
+	// FeatureMinProperties is minimum object property count
+	FeatureMinProperties
+	// FeatureMaxProperties is maximum object property count
+	FeatureMaxProperties
+	// FeatureUniqueItems requires array items to be unique
+	FeatureUniqueItems
+	// FeatureNullable indicates nullable values (OpenAPI)
+	FeatureNullable
+	// FeatureDeprecated marks schema as deprecated
+	FeatureDeprecated
+	// FeatureReadOnly indicates read-only properties
+	FeatureReadOnly
+	// FeatureWriteOnly indicates write-only properties
+	FeatureWriteOnly
 )
 
 // featureNames maps features to their string representations
@@ -59,6 +83,18 @@ var featureNames = map[SchemaFeature]string{
 	FeatureEnum:                 "enum",
 	FeatureConst:                "const",
 	FeatureDefault:              "default",
+	FeatureTitle:                "title",
+	FeatureExamples:             "examples",
+	FeatureMultipleOf:           "multipleOf",
+	FeatureMinItems:             "minItems",
+	FeatureMaxItems:             "maxItems",
+	FeatureMinProperties:        "minProperties",
+	FeatureMaxProperties:        "maxProperties",
+	FeatureUniqueItems:          "uniqueItems",
+	FeatureNullable:             "nullable",
+	FeatureDeprecated:           "deprecated",
+	FeatureReadOnly:             "readOnly",
+	FeatureWriteOnly:            "writeOnly",
 }
 
 // String returns the JSON Schema keyword name for this feature.
@@ -88,6 +124,18 @@ func AllFeatures() []SchemaFeature {
 		FeatureEnum,
 		FeatureConst,
 		FeatureDefault,
+		FeatureTitle,
+		FeatureExamples,
+		FeatureMultipleOf,
+		FeatureMinItems,
+		FeatureMaxItems,
+		FeatureMinProperties,
+		FeatureMaxProperties,
+		FeatureUniqueItems,
+		FeatureNullable,
+		FeatureDeprecated,
+		FeatureReadOnly,
+		FeatureWriteOnly,
 	}
 }
 
@@ -145,6 +193,10 @@ type FeatureLossWarning struct {
 	// Feature is the schema feature that will be lost
 	Feature SchemaFeature
 
+	// Path is the JSON pointer path to the schema location using the feature.
+	// Empty string indicates the root schema.
+	Path string
+
 	// FromAdapter is the source adapter name
 	FromAdapter string
 
@@ -154,6 +206,10 @@ type FeatureLossWarning struct {
 
 // String returns a human-readable warning message.
 func (w FeatureLossWarning) String() string {
-	return fmt.Sprintf("feature %s lost converting from %s to %s",
-		w.Feature, w.FromAdapter, w.ToAdapter)
+	path := w.Path
+	if path == "" {
+		path = "/"
+	}
+	return fmt.Sprintf("feature %s lost converting from %s to %s at %s",
+		w.Feature, w.FromAdapter, w.ToAdapter, path)
 }

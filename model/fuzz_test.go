@@ -124,14 +124,15 @@ func FuzzParseToolID(f *testing.F) {
 	f.Add("simple-name")
 	f.Add("ns:tool-name")
 	f.Add("my-namespace:my-tool")
+	f.Add("namespace:name:1.0.0")
 
 	// Invalid tool IDs
 	f.Add("")
 	f.Add(":")
 	f.Add(":name")
 	f.Add("namespace:")
-	f.Add("a:b:c")
-	f.Add("too:many:colons")
+	f.Add("a:b:c:")
+	f.Add("too:many:colons:again")
 
 	// Edge cases
 	f.Add("a")

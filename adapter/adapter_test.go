@@ -26,6 +26,18 @@ func TestSchemaFeature_String(t *testing.T) {
 		{FeatureEnum, "enum"},
 		{FeatureConst, "const"},
 		{FeatureDefault, "default"},
+		{FeatureTitle, "title"},
+		{FeatureExamples, "examples"},
+		{FeatureMultipleOf, "multipleOf"},
+		{FeatureMinItems, "minItems"},
+		{FeatureMaxItems, "maxItems"},
+		{FeatureMinProperties, "minProperties"},
+		{FeatureMaxProperties, "maxProperties"},
+		{FeatureUniqueItems, "uniqueItems"},
+		{FeatureNullable, "nullable"},
+		{FeatureDeprecated, "deprecated"},
+		{FeatureReadOnly, "readOnly"},
+		{FeatureWriteOnly, "writeOnly"},
 	}
 
 	for _, tt := range tests {
@@ -72,6 +84,18 @@ func TestAllFeatures(t *testing.T) {
 		FeatureEnum,
 		FeatureConst,
 		FeatureDefault,
+		FeatureTitle,
+		FeatureExamples,
+		FeatureMultipleOf,
+		FeatureMinItems,
+		FeatureMaxItems,
+		FeatureMinProperties,
+		FeatureMaxProperties,
+		FeatureUniqueItems,
+		FeatureNullable,
+		FeatureDeprecated,
+		FeatureReadOnly,
+		FeatureWriteOnly,
 	}
 
 	for _, known := range knownFeatures {

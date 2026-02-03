@@ -146,17 +146,22 @@ type LocalBackend struct {
 }
 
 // ToolID returns the canonical identifier for a tool.
-// Format: "namespace:name" when namespace is present, otherwise just "name".
+// Format: "namespace:name:version" when namespace+version are present,
+// "namespace:name" when namespace is present without version, otherwise just "name".
 func (t *Tool) ToolID() string {
 	if t.Namespace == "" {
 		return t.Name
+	}
+	if t.Version != "" {
+		return t.Namespace + ":" + t.Name + ":" + t.Version
 	}
 	return t.Namespace + ":" + t.Name
 }
 
 // ParseToolID parses a tool ID string into namespace and name components.
-// The format is "namespace:name" or just "name" (empty namespace).
-// Returns an error if the ID is empty or contains multiple colons.
+// The format is "namespace:name:version", "namespace:name", or just "name".
+// Returns an error if the ID is empty or contains more than two colons.
+// When a version segment is present, the returned name includes ":version".
 func ParseToolID(id string) (namespace, name string, err error) {
 	if id == "" {
 		return "", "", ErrInvalidToolID
@@ -164,7 +169,7 @@ func ParseToolID(id string) (namespace, name string, err error) {
 
 	// Count colons - we only allow at most one
 	colonCount := strings.Count(id, ":")
-	if colonCount > 1 {
+	if colonCount > 2 {
 		return "", "", ErrInvalidToolID
 	}
 
@@ -173,17 +178,53 @@ func ParseToolID(id string) (namespace, name string, err error) {
 		return "", id, nil
 	}
 
-	// Split on the single colon
-	parts := strings.SplitN(id, ":", 2)
+	parts := strings.Split(id, ":")
 	namespace = parts[0]
 	name = parts[1]
+	if colonCount == 2 {
+		name = name + ":" + parts[2]
+	}
 
 	// Both namespace and name must be non-empty when colon is present
-	if namespace == "" || name == "" {
+	if namespace == "" || name == "" || (colonCount == 2 && parts[2] == "") {
 		return "", "", ErrInvalidToolID
 	}
 
 	return namespace, name, nil
+}
+
+// ParseToolIDWithVersion parses a tool ID string into namespace, name, and version.
+// The format is "namespace:name:version", "namespace:name", or just "name".
+// Returns an error if the ID is empty or contains more than two colons.
+func ParseToolIDWithVersion(id string) (namespace, name, version string, err error) {
+	if id == "" {
+		return "", "", "", ErrInvalidToolID
+	}
+
+	colonCount := strings.Count(id, ":")
+	if colonCount > 2 {
+		return "", "", "", ErrInvalidToolID
+	}
+
+	if colonCount == 0 {
+		return "", id, "", nil
+	}
+
+	parts := strings.Split(id, ":")
+	if len(parts) < 2 {
+		return "", "", "", ErrInvalidToolID
+	}
+	namespace = parts[0]
+	name = parts[1]
+	if colonCount == 2 {
+		version = parts[2]
+	}
+
+	if namespace == "" || name == "" || (colonCount == 2 && version == "") {
+		return "", "", "", ErrInvalidToolID
+	}
+
+	return namespace, name, version, nil
 }
 
 // Validate checks basic invariants of Tool required by toolmodel consumers.

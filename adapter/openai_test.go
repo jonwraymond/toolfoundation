@@ -31,6 +31,12 @@ func TestOpenAIAdapter_SupportsFeature(t *testing.T) {
 		FeatureMaximum,
 		FeatureMinLength,
 		FeatureMaxLength,
+		FeatureMultipleOf,
+		FeatureMinItems,
+		FeatureMaxItems,
+		FeatureMinProperties,
+		FeatureMaxProperties,
+		FeatureUniqueItems,
 		FeatureConst,
 	}
 	for _, feature := range supported {
@@ -49,6 +55,12 @@ func TestOpenAIAdapter_SupportsFeature(t *testing.T) {
 		FeatureNot,
 		FeaturePattern,
 		FeatureFormat,
+		FeatureTitle,
+		FeatureExamples,
+		FeatureNullable,
+		FeatureDeprecated,
+		FeatureReadOnly,
+		FeatureWriteOnly,
 	}
 	for _, feature := range unsupported {
 		if adapter.SupportsFeature(feature) {

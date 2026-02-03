@@ -26,15 +26,16 @@ fields and adds stack-specific extensions.
 
 | Field | Required | Constraints / Notes |
 |-------|----------|---------------------|
-| `namespace` | No | Optional namespace for stable IDs. If present, tool ID is `namespace:name`. Namespace and name must both be non-empty when used. | 
+| `namespace` | No | Optional namespace for stable IDs. If present, tool ID is `namespace:name:version` when version is set, otherwise `namespace:name`. Namespace and name must both be non-empty when used. | 
 | `version` | No | Optional semantic version string (accepts `v1.2.3` or `1.2.3`). | 
 | `tags` | No | Normalized tags for discovery; see rules below. | 
 
 ### Tool ID rules
 
-- Tool IDs are `namespace:name` when `namespace` is set, otherwise just `name`.
-- Only one `:` is permitted in an ID.
+- Tool IDs are `namespace:name:version` when both namespace and version are set, `namespace:name` when only namespace is set, otherwise just `name`.
+- Up to two `:` are permitted in an ID (the second separates version).
 - `namespace` and `name` must both be non-empty when a `:` is used.
+- `version` must be non-empty when present.
 
 ### Tag normalization rules
 
