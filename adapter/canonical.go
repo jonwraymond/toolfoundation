@@ -124,6 +124,7 @@ type CanonicalProvider struct {
 	// SourceMeta contains format-specific metadata for round-trip conversion.
 	SourceMeta map[string]any
 }
+
 // ID returns the tool's fully qualified identifier.
 // If Namespace is set, returns "namespace:name", otherwise just "name".
 func (t *CanonicalTool) ID() string {

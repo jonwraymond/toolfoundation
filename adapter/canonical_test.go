@@ -348,18 +348,18 @@ func TestJSONSchema_ToMap_WithConstraints(t *testing.T) {
 	uniqueItems := true
 
 	s := &JSONSchema{
-		Type:        "number",
-		MultipleOf:  &multipleOf,
-		Minimum:     &min,
-		Maximum:     &max,
-		MinLength:   &minLen,
-		MaxLength:   &maxLen,
-		MinItems:    &minItems,
-		MaxItems:    &maxItems,
+		Type:          "number",
+		MultipleOf:    &multipleOf,
+		Minimum:       &min,
+		Maximum:       &max,
+		MinLength:     &minLen,
+		MaxLength:     &maxLen,
+		MinItems:      &minItems,
+		MaxItems:      &maxItems,
 		MinProperties: &minProps,
 		MaxProperties: &maxProps,
-		UniqueItems: &uniqueItems,
-		Pattern:     "^\\d+$",
+		UniqueItems:   &uniqueItems,
+		Pattern:       "^\\d+$",
 	}
 
 	got := s.ToMap()

@@ -22,20 +22,20 @@ func (a *A2AAdapter) Name() string {
 
 // A2AAgentCard represents an A2A Agent Card (simplified for adapter use).
 type A2AAgentCard struct {
-	Name               string                    `json:"name"`
-	Description        string                    `json:"description"`
-	SupportedInterfaces []A2AAgentInterface      `json:"supportedInterfaces"`
-	Provider           *A2AAgentProvider         `json:"provider,omitempty"`
-	Version            string                    `json:"version"`
-	DocumentationURL   string                    `json:"documentationUrl,omitempty"`
-	Capabilities       A2AAgentCapabilities      `json:"capabilities"`
-	SecuritySchemes    map[string]SecurityScheme `json:"securitySchemes,omitempty"`
-	SecurityRequirements []SecurityRequirement   `json:"securityRequirements,omitempty"`
-	DefaultInputModes  []string                  `json:"defaultInputModes"`
-	DefaultOutputModes []string                  `json:"defaultOutputModes"`
-	Skills             []A2AAgentSkill           `json:"skills"`
-	Signatures         []map[string]any          `json:"signatures,omitempty"`
-	IconURL            string                    `json:"iconUrl,omitempty"`
+	Name                 string                    `json:"name"`
+	Description          string                    `json:"description"`
+	SupportedInterfaces  []A2AAgentInterface       `json:"supportedInterfaces"`
+	Provider             *A2AAgentProvider         `json:"provider,omitempty"`
+	Version              string                    `json:"version"`
+	DocumentationURL     string                    `json:"documentationUrl,omitempty"`
+	Capabilities         A2AAgentCapabilities      `json:"capabilities"`
+	SecuritySchemes      map[string]SecurityScheme `json:"securitySchemes,omitempty"`
+	SecurityRequirements []SecurityRequirement     `json:"securityRequirements,omitempty"`
+	DefaultInputModes    []string                  `json:"defaultInputModes"`
+	DefaultOutputModes   []string                  `json:"defaultOutputModes"`
+	Skills               []A2AAgentSkill           `json:"skills"`
+	Signatures           []map[string]any          `json:"signatures,omitempty"`
+	IconURL              string                    `json:"iconUrl,omitempty"`
 }
 
 // A2AAgentProvider describes the provider of an agent.
@@ -46,10 +46,10 @@ type A2AAgentProvider struct {
 
 // A2AAgentCapabilities describes agent capability flags.
 type A2AAgentCapabilities struct {
-	Streaming        *bool              `json:"streaming,omitempty"`
-	PushNotifications *bool             `json:"pushNotifications,omitempty"`
-	Extensions       []A2AAgentExtension `json:"extensions,omitempty"`
-	ExtendedAgentCard *bool             `json:"extendedAgentCard,omitempty"`
+	Streaming         *bool               `json:"streaming,omitempty"`
+	PushNotifications *bool               `json:"pushNotifications,omitempty"`
+	Extensions        []A2AAgentExtension `json:"extensions,omitempty"`
+	ExtendedAgentCard *bool               `json:"extendedAgentCard,omitempty"`
 }
 
 // A2AAgentExtension describes a supported extension.
@@ -62,21 +62,21 @@ type A2AAgentExtension struct {
 
 // A2AAgentSkill describes a distinct skill.
 type A2AAgentSkill struct {
-	ID                   string                 `json:"id"`
-	Name                 string                 `json:"name"`
-	Description          string                 `json:"description"`
-	Tags                 []string               `json:"tags"`
-	Examples             []string               `json:"examples,omitempty"`
-	InputModes           []string               `json:"inputModes,omitempty"`
-	OutputModes          []string               `json:"outputModes,omitempty"`
-	SecurityRequirements []SecurityRequirement  `json:"securityRequirements,omitempty"`
+	ID                   string                `json:"id"`
+	Name                 string                `json:"name"`
+	Description          string                `json:"description"`
+	Tags                 []string              `json:"tags"`
+	Examples             []string              `json:"examples,omitempty"`
+	InputModes           []string              `json:"inputModes,omitempty"`
+	OutputModes          []string              `json:"outputModes,omitempty"`
+	SecurityRequirements []SecurityRequirement `json:"securityRequirements,omitempty"`
 }
 
 // A2AAgentInterface describes a supported protocol binding.
 type A2AAgentInterface struct {
-	URL            string `json:"url"`
+	URL             string `json:"url"`
 	ProtocolBinding string `json:"protocolBinding"`
-	Tenant         string `json:"tenant,omitempty"`
+	Tenant          string `json:"tenant,omitempty"`
 	ProtocolVersion string `json:"protocolVersion"`
 }
 
@@ -185,16 +185,16 @@ func (a *A2AAdapter) ToCanonicalProvider(raw any) (*CanonicalProvider, error) {
 	}
 
 	provider := &CanonicalProvider{
-		Name:                card.Name,
-		Description:         card.Description,
-		Version:             card.Version,
-		Capabilities:        capabilitiesToMap(card.Capabilities),
-		SecuritySchemes:     card.SecuritySchemes,
+		Name:                 card.Name,
+		Description:          card.Description,
+		Version:              card.Version,
+		Capabilities:         capabilitiesToMap(card.Capabilities),
+		SecuritySchemes:      card.SecuritySchemes,
 		SecurityRequirements: card.SecurityRequirements,
-		DefaultInputModes:   card.DefaultInputModes,
-		DefaultOutputModes:  card.DefaultOutputModes,
-		SourceFormat:        "a2a",
-		SourceMeta:          map[string]any{},
+		DefaultInputModes:    card.DefaultInputModes,
+		DefaultOutputModes:   card.DefaultOutputModes,
+		SourceFormat:         "a2a",
+		SourceMeta:           map[string]any{},
 	}
 
 	provider.Skills = make([]CanonicalTool, 0, len(card.Skills))
@@ -305,15 +305,15 @@ func canonicalFromA2ASkill(skill *A2AAgentSkill) (*CanonicalTool, error) {
 	}
 
 	ct := &CanonicalTool{
-		Namespace:           namespace,
-		Name:                name,
-		Version:             version,
-		DisplayName:         displayName,
-		Description:         skill.Description,
-		Tags:                skill.Tags,
-		InputModes:          skill.InputModes,
-		OutputModes:         skill.OutputModes,
-		Examples:            skill.Examples,
+		Namespace:            namespace,
+		Name:                 name,
+		Version:              version,
+		DisplayName:          displayName,
+		Description:          skill.Description,
+		Tags:                 skill.Tags,
+		InputModes:           skill.InputModes,
+		OutputModes:          skill.OutputModes,
+		Examples:             skill.Examples,
 		SecurityRequirements: skill.SecurityRequirements,
 		InputSchema:          &JSONSchema{Type: "object"},
 		SourceFormat:         "a2a",

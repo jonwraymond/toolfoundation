@@ -52,20 +52,20 @@ var openAIFeatures = map[SchemaFeature]bool{
 	FeatureConst:                true,
 
 	// NOT supported features
-	FeatureRef:     false,
-	FeatureDefs:    false,
-	FeatureAnyOf:   false,
-	FeatureOneOf:   false,
-	FeatureAllOf:   false,
-	FeatureNot:     false,
-	FeaturePattern: false,
-	FeatureFormat:  false,
-	FeatureTitle:   false,
-	FeatureExamples: false,
-	FeatureNullable: false,
+	FeatureRef:        false,
+	FeatureDefs:       false,
+	FeatureAnyOf:      false,
+	FeatureOneOf:      false,
+	FeatureAllOf:      false,
+	FeatureNot:        false,
+	FeaturePattern:    false,
+	FeatureFormat:     false,
+	FeatureTitle:      false,
+	FeatureExamples:   false,
+	FeatureNullable:   false,
 	FeatureDeprecated: false,
-	FeatureReadOnly: false,
-	FeatureWriteOnly: false,
+	FeatureReadOnly:   false,
+	FeatureWriteOnly:  false,
 }
 
 // ToCanonical converts an OpenAI tool to the canonical format.

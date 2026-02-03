@@ -52,19 +52,19 @@ var anthropicFeatures = map[SchemaFeature]bool{
 	FeatureAnyOf:                true, // Anthropic supports anyOf
 
 	// NOT supported features
-	FeatureRef:     false,
-	FeatureDefs:    false,
-	FeatureOneOf:   false, // Limited support
-	FeatureAllOf:   false, // Limited support
-	FeatureNot:     false,
-	FeaturePattern: false,
-	FeatureFormat:  false,
-	FeatureTitle:   false,
-	FeatureExamples: false,
-	FeatureNullable: false,
+	FeatureRef:        false,
+	FeatureDefs:       false,
+	FeatureOneOf:      false, // Limited support
+	FeatureAllOf:      false, // Limited support
+	FeatureNot:        false,
+	FeaturePattern:    false,
+	FeatureFormat:     false,
+	FeatureTitle:      false,
+	FeatureExamples:   false,
+	FeatureNullable:   false,
 	FeatureDeprecated: false,
-	FeatureReadOnly: false,
-	FeatureWriteOnly: false,
+	FeatureReadOnly:   false,
+	FeatureWriteOnly:  false,
 }
 
 // ToCanonical converts an Anthropic tool to the canonical format.

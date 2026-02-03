@@ -506,22 +506,40 @@ func asFloat(v any) (float64, bool) {
 }
 
 func asInt(v any) (int, bool) {
+	const maxInt = int(^uint(0) >> 1)
+	const minInt = -maxInt - 1
+
 	switch t := v.(type) {
 	case int:
 		return t, true
 	case int32:
 		return int(t), true
 	case int64:
+		if t > int64(maxInt) || t < int64(minInt) {
+			return 0, false
+		}
 		return int(t), true
 	case uint:
+		if t > uint(maxInt) {
+			return 0, false
+		}
 		return int(t), true
 	case uint32:
 		return int(t), true
 	case uint64:
+		if t > uint64(maxInt) {
+			return 0, false
+		}
 		return int(t), true
 	case float64:
+		if t > float64(maxInt) || t < float64(minInt) {
+			return 0, false
+		}
 		return int(t), true
 	case float32:
+		if t > float32(maxInt) || t < float32(minInt) {
+			return 0, false
+		}
 		return int(t), true
 	default:
 		return 0, false
