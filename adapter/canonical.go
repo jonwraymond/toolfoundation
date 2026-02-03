@@ -15,17 +15,53 @@ type CanonicalTool struct {
 	// Name is the tool's identifier (required)
 	Name string
 
+	// DisplayName is a human-friendly name for UI presentation.
+	DisplayName string
+
 	// Version is the semantic version of the tool
 	Version string
 
 	// Description explains what the tool does
 	Description string
 
+	// Summary is a short description for discovery results.
+	Summary string
+
 	// Category classifies the tool's purpose
 	Category string
 
 	// Tags are keywords for discovery
 	Tags []string
+
+	// InputModes lists supported input media types (e.g., "application/json").
+	InputModes []string
+
+	// OutputModes lists supported output media types.
+	OutputModes []string
+
+	// Examples provides example prompts or usage scenarios.
+	Examples []string
+
+	// Deterministic indicates whether the tool returns deterministic results.
+	Deterministic *bool
+
+	// Idempotent indicates whether the tool is idempotent.
+	Idempotent *bool
+
+	// Streaming indicates whether the tool supports streaming output.
+	Streaming *bool
+
+	// SecuritySchemes defines auth schemes required by this tool.
+	SecuritySchemes map[string]SecurityScheme
+
+	// SecurityRequirements defines required schemes/scopes for this tool.
+	SecurityRequirements []SecurityRequirement
+
+	// Annotations contains protocol-agnostic annotations for UI or policy.
+	Annotations map[string]any
+
+	// UIHints provides UI-specific hints for rendering tool inputs.
+	UIHints map[string]any
 
 	// InputSchema defines the tool's input parameters (required)
 	InputSchema *JSONSchema
@@ -46,6 +82,48 @@ type CanonicalTool struct {
 	RequiredScopes []string
 }
 
+// SecurityScheme describes a security scheme definition.
+// It uses a generic map to avoid coupling to any single spec.
+type SecurityScheme map[string]any
+
+// SecurityRequirement maps scheme names to required scopes.
+type SecurityRequirement map[string][]string
+
+// CanonicalProvider describes a tool provider (e.g., an A2A AgentCard).
+type CanonicalProvider struct {
+	// Name is the provider name (required).
+	Name string
+
+	// Description explains what the provider does.
+	Description string
+
+	// Version is the provider version.
+	Version string
+
+	// Capabilities lists provider capabilities (e.g., streaming, push notifications).
+	Capabilities map[string]any
+
+	// SecuritySchemes defines auth schemes supported by the provider.
+	SecuritySchemes map[string]SecurityScheme
+
+	// SecurityRequirements defines required schemes/scopes to access the provider.
+	SecurityRequirements []SecurityRequirement
+
+	// DefaultInputModes lists default input media types for all tools.
+	DefaultInputModes []string
+
+	// DefaultOutputModes lists default output media types for all tools.
+	DefaultOutputModes []string
+
+	// Skills are the tools offered by the provider.
+	Skills []CanonicalTool
+
+	// SourceFormat is the original format (e.g., "a2a").
+	SourceFormat string
+
+	// SourceMeta contains format-specific metadata for round-trip conversion.
+	SourceMeta map[string]any
+}
 // ID returns the tool's fully qualified identifier.
 // If Namespace is set, returns "namespace:name", otherwise just "name".
 func (t *CanonicalTool) ID() string {
@@ -73,6 +151,9 @@ type JSONSchema struct {
 	// Type is the JSON type (object, array, string, number, integer, boolean, null)
 	Type string
 
+	// Title is a short schema name.
+	Title string
+
 	// Properties maps property names to their schemas (for object types)
 	Properties map[string]*JSONSchema
 
@@ -94,6 +175,12 @@ type JSONSchema struct {
 	// Default is the default value
 	Default any
 
+	// Examples provide sample values.
+	Examples []any
+
+	// MultipleOf is a numeric multiple constraint.
+	MultipleOf *float64
+
 	// Minimum is the minimum numeric value
 	Minimum *float64
 
@@ -105,6 +192,21 @@ type JSONSchema struct {
 
 	// MaxLength is the maximum string length
 	MaxLength *int
+
+	// MinItems is the minimum array length
+	MinItems *int
+
+	// MaxItems is the maximum array length
+	MaxItems *int
+
+	// MinProperties is the minimum number of properties
+	MinProperties *int
+
+	// MaxProperties is the maximum number of properties
+	MaxProperties *int
+
+	// UniqueItems requires array items to be unique
+	UniqueItems *bool
 
 	// Pattern is a regex pattern for string validation
 	Pattern string
@@ -120,6 +222,18 @@ type JSONSchema struct {
 
 	// AdditionalProperties controls whether extra properties are allowed
 	AdditionalProperties *bool
+
+	// Nullable indicates nullable values (OpenAPI-compatible).
+	Nullable *bool
+
+	// Deprecated marks the schema as deprecated.
+	Deprecated *bool
+
+	// ReadOnly indicates read-only properties.
+	ReadOnly *bool
+
+	// WriteOnly indicates write-only properties.
+	WriteOnly *bool
 
 	// AnyOf allows any of the listed schemas
 	AnyOf []*JSONSchema
@@ -143,6 +257,7 @@ func (s *JSONSchema) DeepCopy() *JSONSchema {
 
 	copied := &JSONSchema{
 		Type:        s.Type,
+		Title:       s.Title,
 		Description: s.Description,
 		Const:       s.Const,
 		Default:     s.Default,
@@ -152,6 +267,10 @@ func (s *JSONSchema) DeepCopy() *JSONSchema {
 	}
 
 	// Deep copy pointer fields
+	if s.MultipleOf != nil {
+		v := *s.MultipleOf
+		copied.MultipleOf = &v
+	}
 	if s.Minimum != nil {
 		v := *s.Minimum
 		copied.Minimum = &v
@@ -168,9 +287,45 @@ func (s *JSONSchema) DeepCopy() *JSONSchema {
 		v := *s.MaxLength
 		copied.MaxLength = &v
 	}
+	if s.MinItems != nil {
+		v := *s.MinItems
+		copied.MinItems = &v
+	}
+	if s.MaxItems != nil {
+		v := *s.MaxItems
+		copied.MaxItems = &v
+	}
+	if s.MinProperties != nil {
+		v := *s.MinProperties
+		copied.MinProperties = &v
+	}
+	if s.MaxProperties != nil {
+		v := *s.MaxProperties
+		copied.MaxProperties = &v
+	}
+	if s.UniqueItems != nil {
+		v := *s.UniqueItems
+		copied.UniqueItems = &v
+	}
 	if s.AdditionalProperties != nil {
 		v := *s.AdditionalProperties
 		copied.AdditionalProperties = &v
+	}
+	if s.Nullable != nil {
+		v := *s.Nullable
+		copied.Nullable = &v
+	}
+	if s.Deprecated != nil {
+		v := *s.Deprecated
+		copied.Deprecated = &v
+	}
+	if s.ReadOnly != nil {
+		v := *s.ReadOnly
+		copied.ReadOnly = &v
+	}
+	if s.WriteOnly != nil {
+		v := *s.WriteOnly
+		copied.WriteOnly = &v
 	}
 
 	// Deep copy slices
@@ -181,6 +336,10 @@ func (s *JSONSchema) DeepCopy() *JSONSchema {
 	if s.Enum != nil {
 		copied.Enum = make([]any, len(s.Enum))
 		copy(copied.Enum, s.Enum)
+	}
+	if s.Examples != nil {
+		copied.Examples = make([]any, len(s.Examples))
+		copy(copied.Examples, s.Examples)
 	}
 
 	// Deep copy Properties map
@@ -241,6 +400,9 @@ func (s *JSONSchema) ToMap() map[string]any {
 	if s.Type != "" {
 		m["type"] = s.Type
 	}
+	if s.Title != "" {
+		m["title"] = s.Title
+	}
 	if s.Description != "" {
 		m["description"] = s.Description
 	}
@@ -261,8 +423,14 @@ func (s *JSONSchema) ToMap() map[string]any {
 	if s.Default != nil {
 		m["default"] = s.Default
 	}
+	if len(s.Examples) > 0 {
+		m["examples"] = s.Examples
+	}
 
 	// Pointer fields
+	if s.MultipleOf != nil {
+		m["multipleOf"] = *s.MultipleOf
+	}
 	if s.Minimum != nil {
 		m["minimum"] = *s.Minimum
 	}
@@ -275,8 +443,35 @@ func (s *JSONSchema) ToMap() map[string]any {
 	if s.MaxLength != nil {
 		m["maxLength"] = *s.MaxLength
 	}
+	if s.MinItems != nil {
+		m["minItems"] = *s.MinItems
+	}
+	if s.MaxItems != nil {
+		m["maxItems"] = *s.MaxItems
+	}
+	if s.MinProperties != nil {
+		m["minProperties"] = *s.MinProperties
+	}
+	if s.MaxProperties != nil {
+		m["maxProperties"] = *s.MaxProperties
+	}
+	if s.UniqueItems != nil {
+		m["uniqueItems"] = *s.UniqueItems
+	}
 	if s.AdditionalProperties != nil {
 		m["additionalProperties"] = *s.AdditionalProperties
+	}
+	if s.Nullable != nil {
+		m["nullable"] = *s.Nullable
+	}
+	if s.Deprecated != nil {
+		m["deprecated"] = *s.Deprecated
+	}
+	if s.ReadOnly != nil {
+		m["readOnly"] = *s.ReadOnly
+	}
+	if s.WriteOnly != nil {
+		m["writeOnly"] = *s.WriteOnly
 	}
 
 	// Slices

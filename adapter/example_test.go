@@ -18,7 +18,7 @@ func ExampleDefaultRegistry() {
 	adapters := registry.List()
 	fmt.Printf("Adapter count: %d\n", len(adapters))
 	// Output:
-	// Adapter count: 3
+	// Adapter count: 5
 }
 
 func ExampleAdapterRegistry_Convert() {

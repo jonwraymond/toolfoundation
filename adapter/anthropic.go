@@ -42,6 +42,12 @@ var anthropicFeatures = map[SchemaFeature]bool{
 	FeatureMaximum:              true,
 	FeatureMinLength:            true,
 	FeatureMaxLength:            true,
+	FeatureMultipleOf:           true,
+	FeatureMinItems:             true,
+	FeatureMaxItems:             true,
+	FeatureMinProperties:        true,
+	FeatureMaxProperties:        true,
+	FeatureUniqueItems:          true,
 	FeatureConst:                true,
 	FeatureAnyOf:                true, // Anthropic supports anyOf
 
@@ -53,6 +59,12 @@ var anthropicFeatures = map[SchemaFeature]bool{
 	FeatureNot:     false,
 	FeaturePattern: false,
 	FeatureFormat:  false,
+	FeatureTitle:   false,
+	FeatureExamples: false,
+	FeatureNullable: false,
+	FeatureDeprecated: false,
+	FeatureReadOnly: false,
+	FeatureWriteOnly: false,
 }
 
 // ToCanonical converts an Anthropic tool to the canonical format.
@@ -129,7 +141,7 @@ func (a *AnthropicAdapter) FromCanonical(ct *CanonicalTool) (any, error) {
 
 	tool := &AnthropicTool{
 		Name:        ct.Name,
-		Description: ct.Description,
+		Description: canonicalDescription(ct),
 	}
 
 	// Convert InputSchema to input_schema map, filtering unsupported features
@@ -169,6 +181,10 @@ func filterAnthropicSchema(schema *JSONSchema) *JSONSchema {
 	}
 
 	// Copy supported pointer fields
+	if schema.MultipleOf != nil {
+		v := *schema.MultipleOf
+		filtered.MultipleOf = &v
+	}
 	if schema.Minimum != nil {
 		v := *schema.Minimum
 		filtered.Minimum = &v
@@ -184,6 +200,26 @@ func filterAnthropicSchema(schema *JSONSchema) *JSONSchema {
 	if schema.MaxLength != nil {
 		v := *schema.MaxLength
 		filtered.MaxLength = &v
+	}
+	if schema.MinItems != nil {
+		v := *schema.MinItems
+		filtered.MinItems = &v
+	}
+	if schema.MaxItems != nil {
+		v := *schema.MaxItems
+		filtered.MaxItems = &v
+	}
+	if schema.MinProperties != nil {
+		v := *schema.MinProperties
+		filtered.MinProperties = &v
+	}
+	if schema.MaxProperties != nil {
+		v := *schema.MaxProperties
+		filtered.MaxProperties = &v
+	}
+	if schema.UniqueItems != nil {
+		v := *schema.UniqueItems
+		filtered.UniqueItems = &v
 	}
 	if schema.AdditionalProperties != nil {
 		v := *schema.AdditionalProperties

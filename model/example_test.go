@@ -33,7 +33,7 @@ func ExampleTool() {
 	fmt.Println("Tool ID:", tool.ToolID())
 	fmt.Println("Name:", tool.Name)
 	// Output:
-	// Tool ID: files:read_file
+	// Tool ID: files:read_file:1.0.0
 	// Name: read_file
 }
 
@@ -126,11 +126,16 @@ func ExampleParseToolID() {
 	ns, name, _ := model.ParseToolID("github:list_repos")
 	fmt.Printf("Namespace: %q, Name: %q\n", ns, name)
 
+	// With namespace and version
+	ns, name, _ = model.ParseToolID("github:list_repos:1.0.0")
+	fmt.Printf("Namespace: %q, Name: %q\n", ns, name)
+
 	// Without namespace
 	ns, name, _ = model.ParseToolID("simple_tool")
 	fmt.Printf("Namespace: %q, Name: %q\n", ns, name)
 	// Output:
 	// Namespace: "github", Name: "list_repos"
+	// Namespace: "github", Name: "list_repos:1.0.0"
 	// Namespace: "", Name: "simple_tool"
 }
 

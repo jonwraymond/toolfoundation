@@ -19,7 +19,7 @@ func TestDefaultRegistry(t *testing.T) {
 	adapters := registry.List()
 	sort.Strings(adapters)
 
-	expected := []string{"anthropic", "mcp", "openai"}
+	expected := []string{"a2a", "anthropic", "gemini", "mcp", "openai"}
 	if len(adapters) != len(expected) {
 		t.Errorf("List() = %v, want %v", adapters, expected)
 	}

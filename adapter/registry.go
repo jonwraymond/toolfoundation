@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -130,17 +131,17 @@ func detectFeatureLoss(tool *CanonicalTool, source, target Adapter) []FeatureLos
 	var warnings []FeatureLossWarning
 
 	if tool.InputSchema != nil {
-		warnings = append(warnings, detectSchemaFeatureLoss(tool.InputSchema, source, target)...)
+		warnings = append(warnings, detectSchemaFeatureLoss(tool.InputSchema, source, target, "")...)
 	}
 	if tool.OutputSchema != nil {
-		warnings = append(warnings, detectSchemaFeatureLoss(tool.OutputSchema, source, target)...)
+		warnings = append(warnings, detectSchemaFeatureLoss(tool.OutputSchema, source, target, "")...)
 	}
 
 	return warnings
 }
 
 // detectSchemaFeatureLoss checks which features in a schema are not supported.
-func detectSchemaFeatureLoss(schema *JSONSchema, source, target Adapter) []FeatureLossWarning {
+func detectSchemaFeatureLoss(schema *JSONSchema, source, target Adapter, path string) []FeatureLossWarning {
 	var warnings []FeatureLossWarning
 
 	// Check each feature that's used in the schema
@@ -151,6 +152,9 @@ func detectSchemaFeatureLoss(schema *JSONSchema, source, target Adapter) []Featu
 		FeatureOneOf:                len(schema.OneOf) > 0,
 		FeatureAllOf:                len(schema.AllOf) > 0,
 		FeatureNot:                  schema.Not != nil,
+		FeatureTitle:                schema.Title != "",
+		FeatureExamples:             len(schema.Examples) > 0,
+		FeatureMultipleOf:           schema.MultipleOf != nil,
 		FeaturePattern:              schema.Pattern != "",
 		FeatureFormat:               schema.Format != "",
 		FeatureAdditionalProperties: schema.AdditionalProperties != nil,
@@ -158,6 +162,15 @@ func detectSchemaFeatureLoss(schema *JSONSchema, source, target Adapter) []Featu
 		FeatureMaximum:              schema.Maximum != nil,
 		FeatureMinLength:            schema.MinLength != nil,
 		FeatureMaxLength:            schema.MaxLength != nil,
+		FeatureMinItems:             schema.MinItems != nil,
+		FeatureMaxItems:             schema.MaxItems != nil,
+		FeatureMinProperties:        schema.MinProperties != nil,
+		FeatureMaxProperties:        schema.MaxProperties != nil,
+		FeatureUniqueItems:          schema.UniqueItems != nil,
+		FeatureNullable:             schema.Nullable != nil,
+		FeatureDeprecated:           schema.Deprecated != nil,
+		FeatureReadOnly:             schema.ReadOnly != nil,
+		FeatureWriteOnly:            schema.WriteOnly != nil,
 		FeatureEnum:                 len(schema.Enum) > 0,
 		FeatureConst:                schema.Const != nil,
 		FeatureDefault:              schema.Default != nil,
@@ -167,6 +180,7 @@ func detectSchemaFeatureLoss(schema *JSONSchema, source, target Adapter) []Featu
 		if used && !target.SupportsFeature(feature) {
 			warnings = append(warnings, FeatureLossWarning{
 				Feature:     feature,
+				Path:        path,
 				FromAdapter: source.Name(),
 				ToAdapter:   target.Name(),
 			})
@@ -175,30 +189,46 @@ func detectSchemaFeatureLoss(schema *JSONSchema, source, target Adapter) []Featu
 
 	// Recursively check nested schemas
 	if schema.Properties != nil {
-		for _, prop := range schema.Properties {
-			warnings = append(warnings, detectSchemaFeatureLoss(prop, source, target)...)
+		for name, prop := range schema.Properties {
+			propPath := joinJSONPath(path, "properties", name)
+			warnings = append(warnings, detectSchemaFeatureLoss(prop, source, target, propPath)...)
 		}
 	}
 	if schema.Items != nil {
-		warnings = append(warnings, detectSchemaFeatureLoss(schema.Items, source, target)...)
+		warnings = append(warnings, detectSchemaFeatureLoss(schema.Items, source, target, joinJSONPath(path, "items"))...)
 	}
 	if schema.Defs != nil {
-		for _, def := range schema.Defs {
-			warnings = append(warnings, detectSchemaFeatureLoss(def, source, target)...)
+		for name, def := range schema.Defs {
+			warnings = append(warnings, detectSchemaFeatureLoss(def, source, target, joinJSONPath(path, "$defs", name))...)
 		}
 	}
-	for _, s := range schema.AnyOf {
-		warnings = append(warnings, detectSchemaFeatureLoss(s, source, target)...)
+	for i, s := range schema.AnyOf {
+		warnings = append(warnings, detectSchemaFeatureLoss(s, source, target, joinJSONPath(path, "anyOf", indexPath(i)))...)
 	}
-	for _, s := range schema.OneOf {
-		warnings = append(warnings, detectSchemaFeatureLoss(s, source, target)...)
+	for i, s := range schema.OneOf {
+		warnings = append(warnings, detectSchemaFeatureLoss(s, source, target, joinJSONPath(path, "oneOf", indexPath(i)))...)
 	}
-	for _, s := range schema.AllOf {
-		warnings = append(warnings, detectSchemaFeatureLoss(s, source, target)...)
+	for i, s := range schema.AllOf {
+		warnings = append(warnings, detectSchemaFeatureLoss(s, source, target, joinJSONPath(path, "allOf", indexPath(i)))...)
 	}
 	if schema.Not != nil {
-		warnings = append(warnings, detectSchemaFeatureLoss(schema.Not, source, target)...)
+		warnings = append(warnings, detectSchemaFeatureLoss(schema.Not, source, target, joinJSONPath(path, "not"))...)
 	}
 
 	return warnings
+}
+
+func joinJSONPath(base string, segments ...string) string {
+	path := base
+	for _, seg := range segments {
+		if seg == "" {
+			continue
+		}
+		path = path + "/" + seg
+	}
+	return path
+}
+
+func indexPath(i int) string {
+	return fmt.Sprintf("%d", i)
 }

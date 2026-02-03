@@ -41,7 +41,7 @@ func Example_createTool() {
 	fmt.Printf("Name: %s\n", tool.Name)
 	fmt.Printf("Description: %s\n", tool.Description)
 	// Output:
-	// Tool ID: docs:search
+	// Tool ID: docs:search:1.0.0
 	// Name: search
 	// Description: Search for documents by query
 }
@@ -55,6 +55,13 @@ func Example_parseToolID() {
 	}
 	fmt.Printf("Namespace: %q, Name: %q\n", namespace, name)
 
+	// Parse a versioned tool ID
+	namespace, name, err = model.ParseToolID("filesystem:read:1.2.3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Namespace: %q, Name: %q\n", namespace, name)
+
 	// Parse a simple tool ID (no namespace)
 	namespace, name, err = model.ParseToolID("echo")
 	if err != nil {
@@ -63,6 +70,7 @@ func Example_parseToolID() {
 	fmt.Printf("Namespace: %q, Name: %q\n", namespace, name)
 	// Output:
 	// Namespace: "filesystem", Name: "read"
+	// Namespace: "filesystem", Name: "read:1.2.3"
 	// Namespace: "", Name: "echo"
 }
 

@@ -26,6 +26,15 @@ func TestTool_ToolID(t *testing.T) {
 			wantID: "filesystem:read",
 		},
 		{
+			name: "with namespace and version",
+			tool: Tool{
+				Tool:      mcp.Tool{Name: "read"},
+				Namespace: "filesystem",
+				Version:   "1.0.0",
+			},
+			wantID: "filesystem:read:1.0.0",
+		},
+		{
 			name: "without namespace",
 			tool: Tool{
 				Tool: mcp.Tool{Name: "read"},
@@ -68,6 +77,13 @@ func TestParseToolID(t *testing.T) {
 			wantErr:       false,
 		},
 		{
+			name:          "with namespace and version",
+			id:            "filesystem:read:1.0.0",
+			wantNamespace: "filesystem",
+			wantName:      "read:1.0.0",
+			wantErr:       false,
+		},
+		{
 			name:          "without namespace",
 			id:            "read",
 			wantNamespace: "",
@@ -80,8 +96,15 @@ func TestParseToolID(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "multiple colons",
-			id:      "a:b:c",
+			name:          "multiple colons",
+			id:            "a:b:c",
+			wantNamespace: "a",
+			wantName:      "b:c",
+			wantErr:       false,
+		},
+		{
+			name:    "too many colons",
+			id:      "a:b:c:d",
 			wantErr: true,
 		},
 		{
@@ -129,16 +152,19 @@ func TestParseToolID_RoundTrip(t *testing.T) {
 	tests := []struct {
 		namespace string
 		name      string
+		version   string
 	}{
-		{"filesystem", "read"},
-		{"", "read"},
-		{"my-namespace", "my-tool"},
+		{"filesystem", "read", ""},
+		{"filesystem", "read", "1.0.0"},
+		{"", "read", ""},
+		{"my-namespace", "my-tool", ""},
 	}
 
 	for _, tt := range tests {
 		tool := Tool{
 			Tool:      mcp.Tool{Name: tt.name},
 			Namespace: tt.namespace,
+			Version:   tt.version,
 		}
 		id := tool.ToolID()
 		gotNamespace, gotName, err := ParseToolID(id)
@@ -146,9 +172,79 @@ func TestParseToolID_RoundTrip(t *testing.T) {
 			t.Errorf("ParseToolID(ToolID()) failed for namespace=%q, name=%q: %v", tt.namespace, tt.name, err)
 			continue
 		}
-		if gotNamespace != tt.namespace || gotName != tt.name {
-			t.Errorf("Round-trip failed: got (%q, %q), want (%q, %q)", gotNamespace, gotName, tt.namespace, tt.name)
+		wantName := tt.name
+		if tt.namespace != "" && tt.version != "" {
+			wantName = tt.name + ":" + tt.version
 		}
+		if gotNamespace != tt.namespace || gotName != wantName {
+			t.Errorf("Round-trip failed: got (%q, %q), want (%q, %q)", gotNamespace, gotName, tt.namespace, wantName)
+		}
+	}
+}
+
+func TestParseToolIDWithVersion(t *testing.T) {
+	tests := []struct {
+		name          string
+		id            string
+		wantNamespace string
+		wantName      string
+		wantVersion   string
+		wantErr       bool
+	}{
+		{
+			name:          "with namespace",
+			id:            "filesystem:read",
+			wantNamespace: "filesystem",
+			wantName:      "read",
+			wantVersion:   "",
+			wantErr:       false,
+		},
+		{
+			name:          "with namespace and version",
+			id:            "filesystem:read:1.0.0",
+			wantNamespace: "filesystem",
+			wantName:      "read",
+			wantVersion:   "1.0.0",
+			wantErr:       false,
+		},
+		{
+			name:          "without namespace",
+			id:            "read",
+			wantNamespace: "",
+			wantName:      "read",
+			wantVersion:   "",
+			wantErr:       false,
+		},
+		{
+			name:    "too many colons",
+			id:      "a:b:c:d",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotNamespace, gotName, gotVersion, err := ParseToolIDWithVersion(tt.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseToolIDWithVersion(%q) error = %v, wantErr %v", tt.id, err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				if err != ErrInvalidToolID {
+					t.Errorf("ParseToolIDWithVersion(%q) error = %v, want ErrInvalidToolID", tt.id, err)
+				}
+				return
+			}
+			if gotNamespace != tt.wantNamespace {
+				t.Errorf("namespace = %q, want %q", gotNamespace, tt.wantNamespace)
+			}
+			if gotName != tt.wantName {
+				t.Errorf("name = %q, want %q", gotName, tt.wantName)
+			}
+			if gotVersion != tt.wantVersion {
+				t.Errorf("version = %q, want %q", gotVersion, tt.wantVersion)
+			}
+		})
 	}
 }
 
