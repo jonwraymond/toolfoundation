@@ -1,6 +1,6 @@
 module github.com/jonwraymond/toolfoundation
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/google/jsonschema-go v0.4.2
